@@ -5,7 +5,7 @@ export GITHUB_TOKEN='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'
 
 
 # Get the commit hash for the latest commit
-COMMIT_HASH=$(git rev-parse --abbrev-ref HEAD | awk -F'/' '{print $2}')
+COMMIT_HASH=$(git rev-parse HEAD)
 
 
 FLOW_FILES=$(git diff-tree --no-commit-id --name-only -r COMMIT_HASH | grep -E '^[^.]+\.(flow-meta\.xml)$')
