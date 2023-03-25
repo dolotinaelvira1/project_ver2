@@ -6,6 +6,9 @@ export SCRATCH_ORG_DEFINITION='C:/Users/dolot/IdeaProjects/project_ver2/config/p
 export GITHUB_REPOSITORY="dolotinaelvira1/project_ver2"
 export TARGET_BRANCH="master"
 
+# Get the commit hash for the latest commit
+COMMIT_HASH=$(git rev-parse HEAD)
+
 FLOW_FILES=$(git diff-tree --no-commit-id --name-only -r $COMMIT_HASH | grep -E '^[^.]+\.(flow-meta\.xml)$' | xargs basename)
 
 if [ -z "$FLOW_FILES" ]; then
@@ -13,8 +16,7 @@ if [ -z "$FLOW_FILES" ]; then
 else
   echo "flow files: $FLOW_FILES"
 
-# Get the commit hash for the latest commit
-COMMIT_HASH=$(git rev-parse HEAD)
+
 
 USERNAME=$(git config --get remote.origin.url | awk -F'/' '{print $4}')
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
@@ -34,22 +36,21 @@ sfdx force:auth:jwt:grant --client-id=3MVG9t0sl2P.pBypyUQ9QtrDHltVGOGkJTU5Zjv_F8
 sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias $RANDOM_STRING --durationdays 7 -a $RANDOM_STRING
 
 
+sfdx force:source:push -u $RANDOM_STRING
 
 
-# Deploy all source in the commit to the scratch org
-sfdx force:source:deploy -p "$SOURCE_PATH" -u $RANDOM_STRING  -c --verbose
-echo "deploy source from source."
 
 # Open the flows in the scratch org and retrieve their URLs
 FLOW_URLS=""
 for FILE in $FLOW_FILES; do
-  FLOW_NAME=$(basename "$FILE" .flow-meta.xml)
+   FLOW_NAME=$(grep -oP '(?<=<label>)[^<]+' "$SOURCE_PATH/flows/$FILE")
   FLOW_URL=$(sfdx force:org:open -p "lightning/flow/$FLOW_NAME" -u $RANDOM_STRING  --urlonly)
   FLOW_URLS+="\n$FLOW_NAME: $FLOW_URL"
 done
 
 echo "flow name: $FLOW_NAME"
 echo "flow url : $FLOW_URL"
+SCRATCH_ORG_URL=$(sfdx force:org:open -u $RANDOM_STRING --urlonly)
 
 # Create a pull request with links to the flows in the scratch org
 COMMENT="Please review the following flows in the scratch org at $SCRATCH_ORG_URL:$FLOW_URLS
