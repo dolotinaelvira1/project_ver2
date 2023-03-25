@@ -6,7 +6,12 @@ export SCRATCH_ORG_DEFINITION='C:/Users/dolot/IdeaProjects/project_ver2/config/p
 export GITHUB_REPOSITORY="dolotinaelvira1/project_ver2"
 export TARGET_BRANCH="master"
 
+FLOW_FILES=$(git diff-tree --no-commit-id --name-only -r $COMMIT_HASH | grep -E '^[^.]+\.(flow-meta\.xml)$' | xargs basename)
 
+if [ -z "$FLOW_FILES" ]; then
+  echo "No changes found in commit."
+else
+  echo "flow files: $FLOW_FILES"
 
 # Get the commit hash for the latest commit
 COMMIT_HASH=$(git rev-parse HEAD)
@@ -28,12 +33,8 @@ sfdx force:auth:jwt:grant --client-id=3MVG9t0sl2P.pBypyUQ9QtrDHltVGOGkJTU5Zjv_F8
 # Create a new scratch org
 sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias $RANDOM_STRING --durationdays 7 -a $RANDOM_STRING
 
-FLOW_FILES=$(git diff-tree --no-commit-id --name-only -r $COMMIT_HASH | grep -E '^[^.]+\.(flow-meta\.xml)$' | xargs basename)
 
-if [ -z "$FLOW_FILES" ]; then
-  echo "No changes found in commit."
-else
-  echo "flow files: $FLOW_FILES"
+
 
 # Deploy all source in the commit to the scratch org
 sfdx force:source:deploy -p "$SOURCE_PATH" -u $RANDOM_STRING  -c --verbose
