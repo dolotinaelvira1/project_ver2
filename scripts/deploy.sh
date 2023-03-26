@@ -51,7 +51,7 @@ done
 echo "flow name: $FLOW_NAME"
 echo "flow url : $FLOW_URL"
 SCRATCH_ORG_URL=$(sfdx force:org:open -u $RANDOM_STRING --urlonly)
-
+echo "SCRATCH_ORG_URL : $SCRATCH_ORG_URL"
 # Create a pull request with links to the flows in the scratch org
 COMMENT="Please review the following flows in the scratch org at $SCRATCH_ORG_URL:$FLOW_URLS
 credentials to access: "
