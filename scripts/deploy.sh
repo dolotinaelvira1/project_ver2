@@ -53,11 +53,14 @@ echo "flow url : $FLOW_URL"
 SCRATCH_ORG_URL=$(sfdx force:org:open -u $RANDOM_STRING --urlonly)
 echo "SCRATCH_ORG_URL : $SCRATCH_ORG_URL"
 # Create a pull request with links to the flows in the scratch org
+...
+# Create a pull request with links to the flows in the scratch org
 COMMENT="Please review the following flows in the scratch org at $SCRATCH_ORG_URL:$FLOW_URLS
 credentials to access: "
 
-
-COMMENT=${COMMENT//$'\n'/\\n}
+# Replace the following line with the new one below
+# COMMENT=${COMMENT//$'\n'/\\n}
+COMMENT=$(echo -e "$COMMENT")
 
 echo "Comment: $COMMENT"
 echo "Head: $HEAD"
@@ -70,6 +73,7 @@ echo "Response: $RESPONSE"
 PR_URL=$(echo "$RESPONSE" | grep "\"html_url\":" | awk '{print $2}' | tr -d '",')
 echo "Pull request created: $PR_URL"
 fi
+
 
 
 
