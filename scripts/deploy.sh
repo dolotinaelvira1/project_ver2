@@ -56,9 +56,8 @@ echo "SCRATCH_ORG_URL : $SCRATCH_ORG_URL"
 COMMENT="Please review the following flows in the scratch org at $SCRATCH_ORG_URL:$FLOW_URLS
 credentials to access: "
 
-# Replace the following line with the new one below
-# COMMENT=${COMMENT//$'\n'/\\n}
-COMMENT=$(echo -e "$COMMENT")
+COMMENT=$(echo -e "$COMMENT" | sed 's/$/\\<br\\>/')
+COMMENT=${COMMENT//$'\n'/}
 
 echo "Comment: $COMMENT"
 echo "Head: $HEAD"
@@ -71,9 +70,3 @@ echo "Response: $RESPONSE"
 PR_URL=$(echo "$RESPONSE" | grep "\"html_url\":" | awk '{print $2}' | tr -d '",')
 echo "Pull request created: $PR_URL"
 fi
-
-
-
-
-
-
