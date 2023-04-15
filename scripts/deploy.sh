@@ -9,83 +9,50 @@ export TARGET_BRANCH="master"
 # Get the commit hash for the latest commit
 COMMIT_HASH=$(git rev-parse HEAD)
 
-USERNAME=$(git config --get remote.origin.url | awk -F'/' '{print $4}')
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
-HEAD="$USERNAME:$BRANCH"
+FLOW_FILES=$(git diff-tree --no-commit-id --name-only -r $COMMIT_HASH | grep -E '^[^.]+\.(flow-meta\.xml)$' | xargs basename)
 
-FLOW_CHANGES=$(python -c "import os, subprocess, sys
-                          from xml.etree import ElementTree as ET
-                          import difflib
-                          import tempfile
+if [ -z "$FLOW_FILES" ]; then
+  echo "No changes found in commit."
+else
+  echo "flow files: $FLOW_FILES"
 
-                          if len(sys.argv) < 2:
-                              print('Error: Commit hash not provided.')
-                              sys.exit(1)
 
-                          commit_hash = sys.argv[1]
 
-                          def get_commit_changes(commit_hash):
-                              changes_list = []
-                              try:
-                                  output = subprocess.check_output(['git', 'diff', commit_hash + '^', commit_hash]).decode('utf-8')
-                                  lines = output.splitlines()
-                                  for line in lines:
-                                      if line.startswith('---') or line.startswith('+++'):
-                                          status = 'edited' if line.startswith('---') else 'added'
-                                          if line.endswith('/dev/null'):
-                                              status = 'deleted'
-                                          change = line.split(' ')[1][2:]
-                                          if not change in changes_list:
-                                              changes_list.append((status, change))
-                              except subprocess.CalledProcessError as e:
-                                  print('Error: {}'.format(e.output.decode("utf-8")))
-                                  sys.exit(1)
-                              return changes_list
+for FILE in $FLOW_FILES; do
+   # ... (your existing code)
+   # Get the file path without the file extension and remove the .flow-meta part
+   FILE_PATH="${FILE%.flow-meta.xml}"
 
-                          def get_flow_diff(file1, file2):
-                              root1 = ET.parse(file1).getroot()
-                              root2 = ET.parse(file2).getroot()
+   # Print debug info
+   echo "Checking for old version in branch: $TARGET_BRANCH"
+   echo "File path: $SOURCE_PATH/flows/$FILE_PATH.flow-meta.xml"
 
-                              xml1 = ET.tostring(root1, encoding='unicode', method='xml')
-                              xml2 = ET.tostring(root2, encoding='unicode', method='xml')
+   # Check if the old version of the flow file exists in the target branch
+   if git cat-file -e origin/$TARGET_BRANCH:$SOURCE_PATH/flows/$FILE_PATH.flow-meta.xml 2>/dev/null; then
 
-                              d = difflib.Differ()
-                              diff = list(d.compare(xml1.splitlines(), xml2.splitlines()))
+      # Get the old version of the flow file from the target branch
+      OLD_FLOW_FILE_CONTENT=$(git show origin/$TARGET_BRANCH:$SOURCE_PATH/flows/$FILE_PATH.flow-meta.xml)
 
-                              formatted_diff = []
-                              for i, line in enumerate(diff):
-                                  if line.startswith('+ ') or line.startswith('- '):
-                                      tag = line[2:].strip()
-                                      if not tag.startswith('<'):
-                                          continue
-                                      operation = 'added' if line.startswith('+ ') else 'removed'
-                                      formatted_diff.append('{} flow element: {}'.format(operation, tag))
+      # Save the old version of the flow file to a temporary file
+      OLD_FLOW_FILE="old_$FILE_PATH.xml"
+      echo "$OLD_FLOW_FILE_CONTENT" > "$OLD_FLOW_FILE"
 
-                              return formatted_diff
+      # Get the new version of the flow file at the current commit
+      NEW_FLOW_FILE="$SOURCE_PATH/flows/$FILE_PATH.flow-meta.xml"
 
-                          flow_changes = []
-                          for status, change in get_commit_changes(commit_hash):
-                              if change.endswith('.flow-meta.xml') and status == 'edited':
-                                  old_file = tempfile.NamedTemporaryFile(delete=False).name
-                                  new_file = tempfile.NamedTemporaryFile(delete=False).name
-                                  os.system('git show {}^:{} > {}'.format(commit_hash, change, old_file))
-                                  os.system('git show {}:{} > {}'.format(commit_hash, change, new_file))
-                                  flow_changes += get_flow_diff(old_file, new_file)
+      # Call the Python script for comparing flows
+      flow_comparison_output=$(python scripts/flow_comparison_table.py "$OLD_FLOW_FILE" "$NEW_FLOW_FILE")
 
-                              formatted_flow_changes = "\n".join(flow_changes)
-                              print(formatted_flow_changes)
-                              ")
+      # Echo the table
+      echo "$flow_comparison_output"
 
-COMMENT="Please review the following flows in the scratch org at ... credentials to access:
-Flow changes:$FORMATTED_FLOW_CHANGES"
+      # Remove the temporary old flow file
+      rm "$OLD_FLOW_FILE"
+   else
+      echo "Old version of $FILE not found in the target branch. Skipping comparison."
+   fi
 
-ESC_COMMENT=$(echo -e "$COMMENT" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\//\\\//g' -e 's/$/\\n/g')
-RESPONSE=$(curl -sS -H "Authorization: Bearer $GITHUB_TOKEN" \
-  -H "Accept: application/vnd.github.v3+json" \
-  "https://api.github.com/repos/$GITHUB_REPOSITORY/pulls" \
-  -d "{\"title\":\"Peer review for declarative changes\",\"body\":\"$ESC_COMMENT\",\"head\":\"$HEAD\",\"base\":\"$TARGET_BRANCH\"}")
+done
 
-echo "Response: $RESPONSE"
+fi
 
-PR_URL=$(echo "$RESPONSE" | grep ""html_url":" | awk '{print $2}' | tr -d '",')
-echo "Pull request created: $PR_URL "
