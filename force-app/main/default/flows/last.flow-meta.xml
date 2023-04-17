@@ -3,7 +3,7 @@
     <apiVersion>57.0</apiVersion>
     <environments>Default</environments>
     <interviewLabel>last {!$Flow.CurrentDateTime}</interviewLabel>
-    <label>ssp</label>
+    <label>sp</label>
     <processMetadataValues>
         <name>BuilderType</name>
         <value>
