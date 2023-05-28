@@ -1,58 +1,63 @@
 #!/bin/bash
 
-export GITHUB_TOKEN='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'
-export SOURCE_PATH='C:/Users/dolot/IdeaProjects/project_ver2/force-app/main/default'
-export SCRATCH_ORG_DEFINITION='C:/Users/dolot/IdeaProjects/project_ver2/config/project-scratch-def.json'
-export GITHUB_REPOSITORY="dolotinaelvira1/project_ver2"
-export TARGET_BRANCH="master"
+# Проверка наличия необходимых утилит
+check_dependencies() {
+    local dependencies=("git" "grep" "xargs" "basename")
+    for dep in "${dependencies[@]}"; do
+        if ! command -v "$dep" >/dev/null 2>&1; then
+            echo "Необходимая утилита $dep не найдена. Установите ее и повторите попытку."
+            exit 1
+        fi
+    done
+}
 
-# Get the commit hash for the latest commit
-COMMIT_HASH=$(git rev-parse HEAD)
+# Проверка наличия измененных файлов Flow
+check_flow_changes() {
+    local modified_files
+    modified_files=$(git diff "$BRANCH_NAME"...dev --name-only | grep -i "flow-meta.xml")
 
-FLOW_FILES=$(git diff-tree --no-commit-id --name-only -r $COMMIT_HASH | grep -E '^[^.]+\.(flow-meta\.xml)$' | xargs basename)
+    if [[ -z "$modified_files" ]]; then
+        echo "Нет изменений в файлах Flow."
+        exit 0
+    fi
 
-if [ -z "$FLOW_FILES" ]; then
-  echo "No changes found in commit."
-else
-  echo "flow files: $FLOW_FILES"
+    local flow_files
+    flow_files=$(echo "$modified_files" | grep -E '^[^.]+\.(flow-meta\.xml)$' | xargs -r basename)
 
+    if [[ -z "$flow_files" ]]; then
+        echo "Нет изменений в файлах Flow."
+        exit 0
+    fi
 
+    process_flow_files "$flow_files"
+}
 
-for FILE in $FLOW_FILES; do
-   # ... (your existing code)
-   # Get the file path without the file extension and remove the .flow-meta part
-   FILE_PATH="${FILE%.flow-meta.xml}"
+# Обработка файлов Flow
+process_flow_files() {
+    local flow_files=$1
+    local target_branch="master"
+    local source_path="force-app/main/default"
 
-   # Print debug info
-   echo "Checking for old version in branch: $TARGET_BRANCH"
-   echo "File path: $SOURCE_PATH/flows/$FILE_PATH.flow-meta.xml"
+    for file in $flow_files; do
+        local file_path="${file%.flow-meta.xml}"
+        echo "Проверка старой версии в ветке: $target_branch ($BRANCH_NAME)"
+        echo "Путь к файлу: $source_path/flows/$file_path.flow-meta.xml"
 
-   # Check if the old version of the flow file exists in the target branch
-   if git cat-file -e origin/$TARGET_BRANCH:$SOURCE_PATH/flows/$FILE_PATH.flow-meta.xml 2>/dev/null; then
+        local old_flow_file="old_$file_path.xml"
+        git show "$target_branch:$source_path/flows/$file_path.flow-meta.xml" > "$old_flow_file"
+        local new_flow_file="$source_path/flows/$file_path.flow-meta.xml"
+        echo "elvira $old_flow_file"
+        echo "elvira  $new_flow_file"
+        flow_comparison_output=$(python scripts/flow_comparison_table.py "$old_flow_file" "$new_flow_file")
+        echo "$flow_comparison_output"
+        rm "$old_flow_file"
+    done
+}
 
-      # Get the old version of the flow file from the target branch
-      OLD_FLOW_FILE_CONTENT=$(git show origin/$TARGET_BRANCH:$SOURCE_PATH/flows/$FILE_PATH.flow-meta.xml)
+# Проверка наличия зависимостей и запуск скрипта
+main() {
+    check_dependencies
+    check_flow_changes
+}
 
-      # Save the old version of the flow file to a temporary file
-      OLD_FLOW_FILE="old_$FILE_PATH.xml"
-      echo "$OLD_FLOW_FILE_CONTENT" > "$OLD_FLOW_FILE"
-
-      # Get the new version of the flow file at the current commit
-      NEW_FLOW_FILE="$SOURCE_PATH/flows/$FILE_PATH.flow-meta.xml"
-
-      # Call the Python script for comparing flows
-      flow_comparison_output=$(python scripts/flow_comparison_table.py "$OLD_FLOW_FILE" "$NEW_FLOW_FILE")
-
-      # Echo the table
-      echo "$flow_comparison_output"
-
-      # Remove the temporary old flow file
-      rm "$OLD_FLOW_FILE"
-   else
-      echo "Old version of $FILE not found in the target branch. Skipping comparison."
-   fi
-
-done
-
-fi
-
+main
