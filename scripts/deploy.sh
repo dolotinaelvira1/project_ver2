@@ -50,8 +50,7 @@ process_flow_files() {
         flow_comparison_output=$(python scripts/flow_comparison_table.py "$old_flow_file" "$new_flow_file")
         echo "$flow_comparison_output" > output.txt
         output=$(cat output.txt)
-        echo $output
-        echo "::set-output name=output::$output"
+        echo -e "::set-output name=output::$output"
         rm "$old_flow_file"
     done
 }
