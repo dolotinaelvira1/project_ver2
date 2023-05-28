@@ -3,7 +3,7 @@
     <apiVersion>57.0</apiVersion>
     <environments>Default</environments>
     <interviewLabel>flow {!$Flow.CurrentDateTime}</interviewLabel>
-    <label>flpow</label>
+    <label>fliidhd</label>
     <processMetadataValues>
         <name>BuilderType</name>
         <value>
@@ -25,7 +25,7 @@
     <processType>Flow</processType>
     <screens>
         <name>testik</name>
-        <label>test</label>
+        <label>hdhdf</label>
         <locationX>176</locationX>
         <locationY>158</locationY>
         <allowBack>true</allowBack>
