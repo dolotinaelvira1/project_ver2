@@ -14,7 +14,8 @@ check_dependencies() {
 # Проверка наличия измененных файлов Flow
 check_flow_changes() {
     local modified_files
-   modified_files=$(git diff origin/master HEAD..."$BRANCH_NAME" --name-only | grep -i "flow-meta.xml")
+    git fetch origin master
+   modified_files=$(git diff master..."$BRANCH_NAME" --name-only | grep -i "flow-meta.xml")
     if [[ -z "$modified_files" ]]; then
         echo "Нет изменений в файлах Flow."
         exit 0
