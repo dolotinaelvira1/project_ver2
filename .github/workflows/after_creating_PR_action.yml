@@ -32,7 +32,7 @@ jobs:
 
       - name: Add comment
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
         run: |
           output="${{ steps.deploy_script.outputs.output }}"
           echo "Adding comment: $output"
