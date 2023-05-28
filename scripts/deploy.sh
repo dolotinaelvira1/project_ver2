@@ -14,8 +14,8 @@ check_dependencies() {
 # Проверка наличия измененных файлов Flow
 check_flow_changes() {
     local modified_files
-        modified_files=$(git diff master..."$BRANCH_NAME" --name-only | grep -i "flow-meta.xml")
-         if [[ -z "$modified_files" ]]; then
+       modified_files=$(git diff origin/master...origin/$BRANCH_NAME --name-only | grep -i "flow-meta.xml")
+    if [[ -z "$modified_files" ]]; then
         echo "Нет изменений в файлах Flow."
         exit 0
     fi
@@ -43,8 +43,8 @@ process_flow_files() {
         echo "Путь к файлу: $source_path/flows/$file_path.flow-meta.xml"
 
         local old_flow_file="old_$file_path.xml"
-        git show "$target_branch:$source_path/flows/$file_path.flow-meta.xml" > "$old_flow_file"
-        local new_flow_file="$source_path/flows/$file_path.flow-meta.xml"
+       git show "origin/$target_branch:$source_path/flows/$file_path.flow-meta.xml" > "$old_flow_file"
+       local new_flow_file="$source_path/flows/$file_path.flow-meta.xml"
         echo "elvira $old_flow_file"
         echo "elvira  $new_flow_file"
         flow_comparison_output=$(python scripts/flow_comparison_table.py "$old_flow_file" "$new_flow_file")
