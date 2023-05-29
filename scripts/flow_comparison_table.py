@@ -63,13 +63,13 @@ def get_element_name(element):
 
 
 def print_changes_table(changes):
-    header = f"\033[1m{'Old Value':<30} | {'New Value':<30} | {'Path':<60} | {'Element':<20}\033[0m"
+    header = f"{'Old Value':<30} | {'New Value':<30} | {'Path':<60} | {'Element':<20}"
     print(header)
     print("-" * len(header))
 
     for change in changes:
-        old_value = f"\033[91m{change['old']}\033[0m"
-        new_value = f"\033[92m{change['new']}\033[0m"
+        old_value = f"{change['old']}"
+        new_value = f"{change['new']}"
         path = change['path'].replace("{}", "")
         element = change['element'].replace("{}", "")
         row = f"{old_value:<30} | {new_value:<30} | {path:<60} | {element:<20}"
