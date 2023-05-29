@@ -41,13 +41,8 @@ jobs:
           ./scripts/deploy.sh $BRANCH_NAME
 
       - name: Add comment
-          env:
-            GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
-          run: |
-            output="${{ steps.deploy_script.outputs.output }}"
-            gh pr comment ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --body "$output"
-
-
-
-
-
+        env:
+          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+        run: |
+          output="${{ steps.deploy_script.outputs.output }}"
+          gh pr comment ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --body "$output"
