@@ -62,18 +62,18 @@ def get_element_name(element):
         return tag
 
 
-def print_changes_list(changes):
+def print_changes_list(changes, file_name):
     for change in changes:
         old_value = change['old']
         new_value = change['new']
         path = change['path'].replace("{}", "")
         element = change['element'].replace("{}", "")
-        print(f"Element: {element}<br>Path: {path}<br>Old Value: {old_value}<br>New Value: {new_value}<br>---")
+        print(f"File: {file_name} | Element: {element} | Path: {path} | Old Value: {old_value} | New Value: {new_value}")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: python flow_comparison_table.py <old_flow_file> <new_flow_file>")
+    if len(sys.argv) != 4:
+        print("Usage: python flow_comparison_table.py <old_flow_file> <new_flow_file> <file_name>")
     else:
         changes = compare_xml_files(sys.argv[1], sys.argv[2])
-        print_changes_list(changes)
+        print_changes_list(changes, sys.argv[3])
