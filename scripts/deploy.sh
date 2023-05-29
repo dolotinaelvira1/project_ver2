@@ -34,6 +34,9 @@ create_scratch_org() {
     RANDOM_STRING=$(openssl rand -hex 5)
     echo "Scratch org alias: $RANDOM_STRING"
     # Authenticate with Salesforce using JWT flow
+     echo "CLIENT_ID $CLIENT_ID"
+     echo "JWT_KEY $JWT_KEY"
+     echo "USERNAME $USERNAME"
     sfdx force:auth:jwt:grant --client-id="$CLIENT_ID" --jwt-key-file="$JWT_KEY" --username="$USERNAME" --set-default-dev-hub  --alias=DevHub
     echo "Access granted"
     # Create a new scratch org
