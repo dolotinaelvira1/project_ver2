@@ -80,7 +80,7 @@ process_flow_files() {
     for file in $flow_files; do
         local file_path="${file%.flow-meta.xml}"
         local old_flow_file="old_$file_path.xml"
-        LABEL= flokkkkkooooooooows
+        LABEL= "flokkkkkooooooooows"
         QUERY=$(printf "SELECT+Id,MasterLabel+FROM+Flow__Flow+WHERE+Status+=+'Active'+AND+MasterLabel+=+'%s'" $LABEL)
 
         response=$(curl -s "$INSTANCE_URL/services/data/v52.0/tooling/query/?q=$QUERY" \
