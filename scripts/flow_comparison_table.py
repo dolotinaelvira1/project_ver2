@@ -76,4 +76,4 @@ if __name__ == "__main__":
         print("Usage: python flow_comparison_table.py <old_flow_file> <new_flow_file> <file_name>")
     else:
         changes = compare_xml_files(sys.argv[1], sys.argv[2])
-        print_changes_list(changes, sys.argv[3])
+        print_changes(changes, sys.argv[3])
