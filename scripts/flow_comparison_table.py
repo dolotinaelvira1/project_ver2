@@ -1,6 +1,7 @@
 import sys
 from lxml import etree
 
+
 def compare_xml_files(file1, file2):
     tree1 = etree.parse(file1)
     tree2 = etree.parse(file2)
@@ -15,6 +16,7 @@ def compare_xml_files(file1, file2):
 
     return all_changes
 
+
 def compare_elements(element1, element2):
     changes = []
 
@@ -27,6 +29,7 @@ def compare_elements(element1, element2):
         })
 
     return changes
+
 
 def get_element_path(element):
     namespaces = {
@@ -43,6 +46,7 @@ def get_element_path(element):
 
     return " > ".join(path)
 
+
 def get_element_name(element):
     namespaces = {
         "metadata": "http://soap.sforce.com/2006/04/metadata"
@@ -57,17 +61,19 @@ def get_element_name(element):
     else:
         return tag
 
-def print_changes(changes):
+
+def print_changes_list(changes):
     for change in changes:
         old_value = change['old']
         new_value = change['new']
         path = change['path'].replace("{}", "")
         element = change['element'].replace("{}", "")
-        print(f"Element: {element}\nPath: {path}\nOld Value: {old_value}\nNew Value: {new_value}\n---")
+        print(f"Element: {element}<br>Path: {path}<br>Old Value: {old_value}<br>New Value: {new_value}<br>---")
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
         print("Usage: python flow_comparison_table.py <old_flow_file> <new_flow_file>")
     else:
         changes = compare_xml_files(sys.argv[1], sys.argv[2])
-        print_changes(changes)
+        print_changes_list(changes)
