@@ -73,9 +73,9 @@ process_flow_files() {
         local file_path="${file%.flow-meta.xml}"
         local old_flow_file="old_$file_path.xml"
 
-        label=$(grep -oP '(?<=<label>).*(?=</label>)' "$flow_file" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
 
-        result=$(sfdx force:mdapi:retrieve -k "$flow_name" -r ./retrieveTempDir -w 10 --json | grep -oP '(?<="id": ")[^"]+' | tail -1)
+
+        result=$(sfdx force:mdapi:retrieve -k "$file_path" -r ./retrieveTempDir -w 10 --json | grep -oP '(?<="id": ")[^"]+' | tail -1)
 
          echo "result : $result"
 
