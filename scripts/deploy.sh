@@ -75,7 +75,7 @@ process_flow_files() {
 
         label=$(grep -oP '(?<=<label>).*(?=</label>)' "$flow_file" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
 
-         result=$(sfdx force:data:soql:query -q "SELECT Id, MasterLabel FROM Flow WHERE Status = 'Active' AND MasterLabel = '$label'" -u $USERNAME --json)
+        result=$(sfdx force:mdapi:retrieve -k "$flow_name" -r ./retrieveTempDir -w 10 --json | grep -oP '(?<="id": ")[^"]+' | tail -1)
 
          echo "result : $result"
 
