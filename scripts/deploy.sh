@@ -35,6 +35,8 @@ check_flow_changes() {
 #!/bin/bash
 
 create_scratch_org() {
+   local modified_files=$1
+   echo "modified_files: $1"
     JWT_KEY_FILE=$(mktemp)
     echo "$JWT_KEY" > "$JWT_KEY_FILE"
     RANDOM_STRING=$(openssl rand -hex 5)
@@ -58,20 +60,8 @@ create_scratch_org() {
 
     local scratch_org_url="$SCRATCH_ORG_URL"
 
-    # Клонирование кода из указанной ветки
-    git clone --branch "$BRANCH_NAME" https://github.com/your-repo.git
-    cd your-repo
+    sfdx force:source:push -u "$RANDOM_STRING"
 
-    # Подготовка и развертывание кода в Scratch org
-    # Замените команды и параметры в соответствии с вашим проектом
-    sfdx force:source:convert -d deploy
-    sfdx force:mdapi:deploy -d deploy -u "$RANDOM_STRING"
-
-    # Получение списка измененных файлов
-    modified_files=$(git diff origin/master...origin/$BRANCH_NAME --name-only | grep -i "flow-meta.xml")
-
-    echo "Modified files:"
-    echo "$modified_files"
 
     cd ..
     rm -rf your-repo
@@ -100,7 +90,7 @@ process_flow_files() {
 # Проверка наличия зависимостей и запуск скрипта
 main() {
     check_dependencies
-    create_scratch_org
+    create_scratch_org "$(check_flow_changes)"
     check_flow_changes
 }
 
