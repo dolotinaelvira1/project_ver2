@@ -62,7 +62,7 @@ process_flow_files() {
     sfdx force:config:set defaultdevhubusername="$USERNAME" --global
 
     # Create a new Scratch Org and retrieve the JSON response
-    SCRATCH_ORG_JSON=$(sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias "$RANDOM_STRING" --durationdays 7  --json)
+    SCRATCH_ORG_JSON=$(sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias "$RANDOM_STRING" --durationdays 7 -a "$RANDOM_STRING" --json)
 
     sfdx force:source:push -u "$RANDOM_STRING"
 
