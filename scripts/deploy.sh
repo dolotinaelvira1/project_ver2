@@ -31,13 +31,11 @@ check_flow_changes() {
     process_flow_files "$flow_files"
 }
 create_scratch_org() {
+    JWT_KEY_FILE=$(mktemp)
+    echo "$JWT_KEY" > "$JWT_KEY_FILE"
     RANDOM_STRING=$(openssl rand -hex 5)
     echo "Scratch org alias: $RANDOM_STRING"
-    # Authenticate with Salesforce using JWT flow
-     echo "CLIENT_ID $CLIENT_ID"
-     echo "JWT_KEY $JWT_KEY"
-     echo "USERNAME $USERNAME"
-    sfdx force:auth:jwt:grant --client-id="$CLIENT_ID" --jwt-key-file="$JWT_KEY" --username="$USERNAME" --set-default-dev-hub  --alias=DevHub
+    sfdx force:auth:jwt:grant --client-id="$CLIENT_ID" --jwt-key-file="$JWT_KEY_FILE" --username="$USERNAME" --set-default-dev-hub  --alias=DevHub
     echo "Access granted"
     # Create a new scratch org
     sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias $RANDOM_STRING --durationdays 7 -a $RANDOM_STRING
@@ -47,6 +45,7 @@ create_scratch_org() {
     local scratch_org_url="https://example.com/scratch-org"
 
     echo "$scratch_org_url"
+    rm "$JWT_KEY_FILE"
 }
 
 # Обработка файлов Flow
