@@ -32,20 +32,23 @@ check_flow_changes() {
 }
 #!/bin/bash
 
+#!/bin/bash
+
 create_scratch_org() {
     JWT_KEY_FILE=$(mktemp)
     echo "$JWT_KEY" > "$JWT_KEY_FILE"
     RANDOM_STRING=$(openssl rand -hex 5)
+    SCRATCH_ORG_DEFINITION="config/project-scratch-def.json"
     echo "Scratch org alias: $RANDOM_STRING"
 
+    # Аутентификация с использованием ключевого файла
+    sfdx force:auth:jwt:grant --clientid "$CLIENT_ID" --jwtkeyfile "$JWT_KEY_FILE" --username "$USERNAME" --setdefaultdevhubusername
 
+    echo "Access granted"
 
     # Установка алиаса для Dev Hub
     sfdx force:config:set defaultdevhubusername="$USERNAME" --global
-    # Аутентификация с использованием ключевого файла
-    sfdx force:auth:jwt:grant --clientid "$CLIENT_ID" --jwtkeyfile "$JWT_KEY_FILE" --username "$USERNAME" --setdefaultdevhubusername --set-default-dev-hub  --alias=DevHub
 
-    echo "Access granted"
     # Создание новой Scratch org
     sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias "$RANDOM_STRING" --durationdays 7 -a "$RANDOM_STRING"
     echo "org created"
@@ -59,10 +62,6 @@ create_scratch_org() {
     rm "$JWT_KEY_FILE"
 }
 
-# Здесь можете добавить другие функции и код скрипта
-
-# Вызов функции create_scratch_org
-create_scratch_org
 
 
 # Обработка файлов Flow
