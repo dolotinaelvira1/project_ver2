@@ -30,6 +30,20 @@ check_flow_changes() {
 
     process_flow_files "$flow_files"
 }
+create_scratch_org() {
+    RANDOM_STRING=$(openssl rand -hex 5)
+    echo "Scratch org alias: $RANDOM_STRING"
+    # Authenticate with Salesforce using JWT flow
+    sfdx force:auth:jwt:grant --client-id=3MVG9t0sl2P.pBypyUQ9QtrDHltVGOGkJTU5Zjv_F8c22JCzQS2P8ZVqlmUgcbkTqh5UyJt..B2Er9OUeDZGZ --jwt-key-file=C:/Users/dolot/JWT/server.key --username=dolotinaelvira@empathetic-badger-rllf1u.com --set-default-dev-hub  --alias=DevHub
+
+    # Create a new scratch org
+    sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias $RANDOM_STRING --durationdays 7 -a $RANDOM_STRING
+    SCRATCH_ORG_URL=$(sfdx force:org:open -u $RANDOM_STRING --urlonly)
+    echo "SCRATCH_ORG_URL : $SCRATCH_ORG_URL"
+    local scratch_org_url="https://example.com/scratch-org"
+
+    echo "$scratch_org_url"
+}
 
 # Обработка файлов Flow
 process_flow_files() {
