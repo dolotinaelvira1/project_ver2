@@ -75,7 +75,8 @@ process_flow_files() {
 
         label=$(grep -oP '(?<=<label>).*(?=</label>)' "$flow_file" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
 
-         result=$(sfdx force:data:soql:query -q "SELECT Id,MasterLabel FROM Flow WHERE  Status = 'Active' AND MasterLabel = $label " --username "$USERNAME" --json)
+         result=$(sfdx force:data:soql:query -q "SELECT Id, MasterLabel FROM Flow WHERE Status = 'Active' AND MasterLabel = '$label'" -u $USERNAME --json)
+
          echo "result : $result"
 
          FLOW_ID=$(sfdx force:data:soql:query -u "$RANDOM_STRING" -q "SELECT Id FROM Flow WHERE LOWER(DeveloperName) = '$FLOW_NAME'" --json | grep -o "\"Id\":\"[^\"]*" | cut -d "\"" -f 4)
