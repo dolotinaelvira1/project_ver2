@@ -68,6 +68,7 @@ process_flow_files() {
 # Проверка наличия зависимостей и запуск скрипта
 main() {
     check_dependencies
+    create_scratch_org
     check_flow_changes
 }
 
