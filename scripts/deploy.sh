@@ -62,11 +62,8 @@ process_flow_files() {
     sfdx force:config:set defaultdevhubusername="$USERNAME" --global
 
     # Create a new Scratch Org and retrieve the JSON response
-    SCRATCH_ORG_JSON=$(sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias "$RANDOM_STRING" --durationdays 7 -a "$RANDOM_STRING" --json)
+    SCRATCH_ORG_JSON=$(sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias "$RANDOM_STRING" --durationdays 7  --json)
 
-    # Extract the Scratch Org URL from the JSON response
-    SCRATCH_ORG_URL=$(echo "$SCRATCH_ORG_JSON" | grep -o '"instanceUrl": "[^"]*' | grep -o '[^"]*$')
-    echo "SCRATCH_ORG_URL: $SCRATCH_ORG_URL"
 
     sfdx force:source:push -u "$RANDOM_STRING"
 
@@ -78,7 +75,7 @@ process_flow_files() {
 
         label=$(grep -oP '(?<=<label>).*(?=</label>)' "$flow_file" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
 
-         result=$(sfdx force:data:soql:query -q "SELECT Id,MasterLabel FROM Flow WHERE  Status = 'Active' AND MasterLabel = $label " --json)
+         result=$(sfdx force:data:soql:query -q "SELECT Id,MasterLabel FROM Flow WHERE  Status = 'Active' AND MasterLabel = $label " --username "$USERNAME" --json)
          echo "result : $result"
 
          FLOW_ID=$(sfdx force:data:soql:query -u "$RANDOM_STRING" -q "SELECT Id FROM Flow WHERE LOWER(DeveloperName) = '$FLOW_NAME'" --json | grep -o "\"Id\":\"[^\"]*" | cut -d "\"" -f 4)
