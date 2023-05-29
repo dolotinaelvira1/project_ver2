@@ -27,9 +27,14 @@ check_flow_changes() {
         echo "Нет изменений в файлах Flow."
         exit 0
     fi
-    echo "flow_files $flow_files"
-    echo "modified_files $modified_files"
-    process_flow_files "$flow_files"
+
+
+for filename in "${flow_files[@]}"; do
+  flow_name=${filename%.flow-meta.xml}
+  flow_names+=("$flow_name")
+done
+
+        process_flow_files "$flow_files" "${flow_names[@]}"
 }
 
 # Обработка файлов Flow
@@ -38,16 +43,11 @@ process_flow_files() {
     local target_branch="master"
     local source_path="force-app/main/default"
 
-    for file in $flow_files; do
-        local file_path="${file%.flow-meta.xml}"
-        local old_flow_file="old_$file_path.xml"
-        git show "origin/$target_branch:$source_path/flows/$file_path.flow-meta.xml" > "$old_flow_file"
-        local new_flow_file="$source_path/flows/$file_path.flow-meta.xml"
-        flow_comparison_output=$(python scripts/flow_comparison_table.py "$old_flow_file" "$new_flow_file" "$file")
-        flow_comparison_output="${flow_comparison_output//$'\n'/'%0A'}"  # Заменить символы новой строки на %0A
-        echo -e "::set-output name=output::$flow_comparison_output"
-    done
+     echo "Processing flow files: $flow_files"
+     # shellcheck disable=SC2145
+     echo "Flow names: ${flow_names[@]}"
 }
+
 
 # Проверка наличия зависимостей и запуск скрипта
 main() {
