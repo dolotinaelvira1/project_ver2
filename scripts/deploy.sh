@@ -43,57 +43,56 @@ process_flow_files() {
     local target_branch="master"
     local source_path="force-app/main/default"
 
-     echo "Processing flow files: $flow_files"
-     # shellcheck disable=SC2145
-     echo "Flow names: ${flow_names[@]}"
+    echo "Processing flow files: $flow_files"
+    # shellcheck disable=SC2145
+    echo "Flow names: ${flow_names[@]}"
 
     JWT_KEY_FILE=$(mktemp)
-        echo "$JWT_KEY" > "$JWT_KEY_FILE"
-        RANDOM_STRING=$(openssl rand -hex 5)
-        SCRATCH_ORG_DEFINITION="config/project-scratch-def.json"
-        echo "Scratch org alias: $RANDOM_STRING"
+    echo "$JWT_KEY" > "$JWT_KEY_FILE"
+    RANDOM_STRING=$(openssl rand -hex 5)
+    SCRATCH_ORG_DEFINITION="config/project-scratch-def.json"
+    echo "Scratch org alias: $RANDOM_STRING"
 
-        # Аутентификация с использованием ключевого файла
-        sfdx force:auth:jwt:grant --clientid "$CLIENT_ID" --jwtkeyfile "$JWT_KEY_FILE" --username "$USERNAME" --setdefaultdevhubusername
+    # Authentication using the key file
+    sfdx force:auth:jwt:grant --clientid "$CLIENT_ID" --jwtkeyfile "$JWT_KEY_FILE" --username "$USERNAME" --setdefaultdevhubusername
 
-        echo "Access granted"
+    echo "Access granted"
 
-        # Установка алиаса для Dev Hub
-        sfdx force:config:set defaultdevhubusername="$USERNAME" --global
+    # Set alias for Dev Hub
+    sfdx force:config:set defaultdevhubusername="$USERNAME" --global
 
+    # Create a new Scratch Org and retrieve the JSON response
+    SCRATCH_ORG_JSON=$(sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias "$RANDOM_STRING" --durationdays 7 -a "$RANDOM_STRING" --json)
 
-        # Create a new Scratch Org and retrieve the JSON response
-        SCRATCH_ORG_JSON=$(sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias "$RANDOM_STRING" --durationdays 7 -a "$RANDOM_STRING" --json)
+    # Extract the Scratch Org URL from the JSON response
+    SCRATCH_ORG_URL=$(echo "$SCRATCH_ORG_JSON" | grep -o '"instanceUrl": "[^"]*' | grep -o '[^"]*$')
+    echo "SCRATCH_ORG_URL: $SCRATCH_ORG_URL"
 
-        # Extract the Scratch Org URL from the JSON response
-        SCRATCH_ORG_URL=$(echo "$SCRATCH_ORG_JSON" | grep -o '"instanceUrl": "[^"]*' | grep -o '[^"]*$')
-        echo "SCRATCH_ORG_URL: $SCRATCH_ORG_URL"
+    sfdx force:source:push -u "$RANDOM_STRING"
 
-
-
-
-        sfdx force:source:push -u "$RANDOM_STRING"
-
-        rm "$JWT_KEY_FILE"
+    rm "$JWT_KEY_FILE"
 
     for file in $flow_files; do
         local file_path="${file%.flow-meta.xml}"
         local old_flow_file="old_$file_path.xml"
 
-         FLOW_NAME="${file_path}"
-        FLOW_ID=$(sfdx force:data:soql:query -u "$RANDOM_STRING" -q "SELECT Id FROM Flow WHERE DeveloperName = '$FLOW_NAME'" --json | grep -o "\"Id\":\"[^\"]*" | cut -d "\"" -f 4)
+        FLOW_NAME="${file_path,,}"  # Convert to lowercase for case-insensitive matching
+        FLOW_ID=$(sfdx force:data:soql:query -u "$RANDOM_STRING" -q "SELECT Id FROM Flow WHERE LOWER(DeveloperName) = '$FLOW_NAME'" --json | grep -o "\"Id\":\"[^\"]*" | cut -d "\"" -f 4)
         echo "Flow ID: $FLOW_ID"
-        FLOW_LINK="https://$SCRATCH_ORG_URL.lightning.force.com/lightning/r/Flow/$FLOW_ID/view"
+
+        if [[ -z "$FLOW_ID" ]]; then
+            echo "Flow ID is empty for Flow: $FLOW_NAME"
+            continue
+        fi
+
+        FLOW_LINK="https://$SCRATCH_ORG_URL/lightning/r/Flow/$FLOW_ID/view"
         echo "Flow Link: $FLOW_LINK"
 
         git show "origin/$target_branch:$source_path/flows/$file_path.flow-meta.xml" > "$old_flow_file"
         local new_flow_file="$source_path/flows/$file_path.flow-meta.xml"
         flow_comparison_output=$(python scripts/flow_comparison_table.py "$old_flow_file" "$new_flow_file" "$file")
-        flow_comparison_output="${flow_comparison_output//$'\n'/'%0A'}"  # Заменить символы новой строки на %0A
+        flow_comparison_output="${flow_comparison_output//$'\n'/'%0A'}"  # Replace newline characters with %0A
         echo -e "::set-output name=output::$flow_comparison_output"
-
-
-
     done
 }
 
