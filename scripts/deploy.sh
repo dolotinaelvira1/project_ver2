@@ -64,30 +64,32 @@ process_flow_files() {
     # Create a new Scratch Org and retrieve the JSON response
     SCRATCH_ORG_JSON=$(sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias "$RANDOM_STRING" --durationdays 7  --json)
 
-
     sfdx force:source:push -u "$RANDOM_STRING"
 
     rm "$JWT_KEY_FILE"
 
+    INSTANCE_URL=$(sfdx force:org:display --json | jq -r '.result.instanceUrl')
+    ACCESS_TOKEN=$(sfdx force:org:display --json | jq -r '.result.accessToken')
+
     for file in $flow_files; do
         local file_path="${file%.flow-meta.xml}"
         local old_flow_file="old_$file_path.xml"
+        LABEL=$(grep -oP '(?<=<label>).*(?=</label>)' "$file" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+        QUERY=$(printf "SELECT+Id,MasterLabel+FROM+Flow__Flow+WHERE+Status+=+'Active'+AND+MasterLabel+=+'%s'" $LABEL)
 
+        response=$(curl -s "$INSTANCE_URL/services/data/v52.0/tooling/query/?q=$QUERY" \
+          -H "Authorization: Bearer $ACCESS_TOKEN" \
+          -H "Content-Type: application/json" \
+          -H "X-PrettyPrint:1")
 
-
-        result=$(sfdx force:mdapi:retrieve -k "$file_path" -r ./retrieveTempDir -w 10 --json | grep -oP '(?<="id": ")[^"]+' | tail -1)
-
-         echo "result : $result"
-
-         FLOW_ID=$(sfdx force:data:soql:query -u "$RANDOM_STRING" -q "SELECT Id FROM Flow WHERE LOWER(DeveloperName) = '$FLOW_NAME'" --json | grep -o "\"Id\":\"[^\"]*" | cut -d "\"" -f 4)
-        echo "Flow ID: $FLOW_ID"
-
-        if [[ -z "$FLOW_ID" ]]; then
-            echo "Flow ID is empty for Flow: $FLOW_NAME"
-            continue
-        fi
+        # Now you can use the $response variable in your script. For example, you can print it:
+        echo "$response"
 
         FLOW_LINK="https://$SCRATCH_ORG_URL/lightning/r/Flow/$FLOW_ID/view"
+
+
+
+
         echo "Flow Link: $FLOW_LINK"
 
         git show "origin/$target_branch:$source_path/flows/$file_path.flow-meta.xml" > "$old_flow_file"
