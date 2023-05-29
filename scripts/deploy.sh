@@ -56,9 +56,25 @@ create_scratch_org() {
     SCRATCH_ORG_URL=$(sfdx force:org:open -u "$RANDOM_STRING" --urlonly)
     echo "SCRATCH_ORG_URL: $SCRATCH_ORG_URL"
 
-    local scratch_org_url="https://example.com/scratch-org"
-    echo "$scratch_org_url"
+    local scratch_org_url="$SCRATCH_ORG_URL"
 
+    # Клонирование кода из указанной ветки
+    git clone --branch "$BRANCH_NAME" https://github.com/your-repo.git
+    cd your-repo
+
+    # Подготовка и развертывание кода в Scratch org
+    # Замените команды и параметры в соответствии с вашим проектом
+    sfdx force:source:convert -d deploy
+    sfdx force:mdapi:deploy -d deploy -u "$RANDOM_STRING"
+
+    # Получение списка измененных файлов
+    modified_files=$(git diff origin/master...origin/$BRANCH_NAME --name-only | grep -i "flow-meta.xml")
+
+    echo "Modified files:"
+    echo "$modified_files"
+
+    cd ..
+    rm -rf your-repo
     rm "$JWT_KEY_FILE"
 }
 
@@ -75,8 +91,6 @@ process_flow_files() {
         local old_flow_file="old_$file_path.xml"
         git show "origin/$target_branch:$source_path/flows/$file_path.flow-meta.xml" > "$old_flow_file"
         local new_flow_file="$source_path/flows/$file_path.flow-meta.xml"
-        echo "elvira $old_flow_file"
-        echo "elvira  $new_flow_file"
         flow_comparison_output=$(python scripts/flow_comparison_table.py "$old_flow_file" "$new_flow_file" "$file")
         flow_comparison_output="${flow_comparison_output//$'\n'/'%0A'}"  # Заменить символы новой строки на %0A
         echo -e "::set-output name=output::$flow_comparison_output"
