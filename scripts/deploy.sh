@@ -57,6 +57,8 @@ process_flow_files() {
         local old_flow_file="old_$file_path.xml"
         git show "origin/$target_branch:$source_path/flows/$file_path.flow-meta.xml" > "$old_flow_file"
         local new_flow_file="$source_path/flows/$file_path.flow-meta.xml"
+        echo "elvira $old_flow_file"
+        echo "elvira  $new_flow_file"
         flow_comparison_output=$(python scripts/flow_comparison_table.py "$old_flow_file" "$new_flow_file" "$file")
         flow_comparison_output="${flow_comparison_output//$'\n'/'%0A'}"  # Заменить символы новой строки на %0A
         echo -e "::set-output name=output::$flow_comparison_output"
