@@ -76,8 +76,12 @@ process_flow_files() {
         local file_path="${file%.flow-meta.xml}"
         local old_flow_file="old_$file_path.xml"
 
-        FLOW_NAME="${file_path,,}"  # Convert to lowercase for case-insensitive matching
-        FLOW_ID=$(sfdx force:data:soql:query -u "$RANDOM_STRING" -q "SELECT Id FROM Flow WHERE LOWER(DeveloperName) = '$FLOW_NAME'" --json | grep -o "\"Id\":\"[^\"]*" | cut -d "\"" -f 4)
+        label=$(grep -oP '(?<=<label>).*(?=</label>)' "$flow_file" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+
+         result=$(sfdx force:data:soql:query -q "SELECT Id,MasterLabel FROM Flow WHERE  Status = 'Active' AND MasterLabel = $label " --json)
+         echo "result : $result"
+
+         FLOW_ID=$(sfdx force:data:soql:query -u "$RANDOM_STRING" -q "SELECT Id FROM Flow WHERE LOWER(DeveloperName) = '$FLOW_NAME'" --json | grep -o "\"Id\":\"[^\"]*" | cut -d "\"" -f 4)
         echo "Flow ID: $FLOW_ID"
 
         if [[ -z "$FLOW_ID" ]]; then
