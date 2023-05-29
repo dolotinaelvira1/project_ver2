@@ -101,6 +101,7 @@ process_flow_files() {
 main() {
     check_dependencies
     create_scratch_org "$(check_flow_changes)"
+    process_flow_files
 }
 
 main
