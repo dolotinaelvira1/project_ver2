@@ -47,36 +47,9 @@ jobs:
         id: deploy_script
         env:
           BRANCH_NAME: ${{ github.head_ref }}
-          CLIENT_ID: 3MVG9t0sl2P.pBypyUQ9QtrDHltVGOGkJTU5Zjv_F8c22JCzQS2P8ZVqlmUgcbkTqh5UyJt..B2Er9OUeDZGZ
-          JWT_KEY: -----BEGIN PRIVATE KEY-----
-  MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDnMh5+LGodFwq2
-  9dsdNTAKChU5BI7y4pfhnyU00rxFTjHFNbKvHC8AgO0T7j7qjdpg3vl3ep6Tbkmz
-  7ah2wPE+tBmt+b6Us8Pm/YwzgvHVYQ0siSVZSab3Nv9ssoH15OdufR36Mw6Dolr2
-  WaWu60VSDWR1fvr8Y9LE1hPyXG6gVULPz+f4zRiYD3qxHxH3bRLTtuQVdykqQeQJ
-  UYVbxV2TpOt/6XPdf7gXMaVZl5Q6W3ab3zvQUMw09lmK1fYZyBECSHH5NNFsMxIH
-  vrtBHeJN347VG0vE300iIVdpBI0Ycw1I1wi0wqy/Aa0gZbGoIqoTZicU8JhiEEce
-  pBFZT2YBAgMBAAECggEBAIDjeAxvRlkhV1/YgGcwF7ABHwPCfs75dCLcTim8sikR
-  Br4iyZLF644kUgcicwDgRDZtGDZ7rZwTiBM/EwPhXJzQWuCaspzD+xrzjw3ImnmS
-  uX1yl9fHL8Xya0N14O3sxvjZ17R8ckMAaCWepLd3ghXUUYUPXW0HWaFSl5wt256V
-  2n+juIJBVg0H5VnHnlwIca+jfJ0JhWxssaIbOFC/0Gn3uPiDZkYjOP1suiejZqTm
-  nS1v0BlUFWT/kST8MGbFIKnotPP08GkV1+0XFRrnEMfCifKdLWrUYI5VyvsUoz2f
-  1xY0NtNO7aWIPIZO6AUGtiW+rkdr3IP4OxtNbWzCSAECgYEA80u2O/W+lKb2iITb
-  jEzdkcJkRzYecf5bwjAayRzg4NRkabR4DT4ow4GvEb8znw0VF78amJA/qQNq17v8
-  maj6Vfz5LyAQcWPR0bnYUzF8l+WhSJJx7EKb6rUroTNbyuT/dFwkvntMFzVCJCx1
-  bY8K0h00238bPnw+iPV9tr+uN5ECgYEA80SoxwtW/dC2YsY1ybDKfUFhjKtJAMkB
-  G6KG4ELCZeulYli5qdIdSBmzvTiJaf3tnz2J91LfM7jTRQNkAG9Otyjk/Xny2Txp
-  F3no24TdzbHRvcnCNHWGvO8vfpj9d+nGTO29BGJXsQeMgtpo6BXZ00coPgiPwpu9
-  AlqkW9/Bb3ECgYArAAOqX0mavlOuV0TybBdxDplomKES5rDTBmuFhgwc0I0avaHG
-  PWk4/K+zhEacYtSKiOUrd7s4pPj6PihsBBiSoA5ujM07LThFSAJ62bE6q4Qw7mki
-  J7ek6PZYHFqp5oVbzHlWDTaql2gkOpNalMCF2FGiRbnL9mubC0B3zzL8cQKBgQCH
-  CEOPSPIerW2v4koVDHc5k8MsLB+3udtNlae8cBIsNON2db2JUEJEtU+Z5voPxY3S
-  6HvetzeCJEPReRJXU3GkJaUGNlzgzLGhAGCLCXN9LAk6ifWs3NfPpAz+/rkjiLY0
-  GXrkJhp6/6+1Krs0qHxi1Iq39FSoN35xAhNdlBRxYQKBgDa5D87NH4ACHn/vjPRe
-  6pbcHNftdMUxJY8ikuaKeVFvQb4MuGYs+aJNEqM+H0HyCVbIUy/ESTGP203Vevyo
-  WHxb3lziQkLHcjCzqCgQqwLOPKxRDvXNnEBUhMeQpvNlpfK2AJWhhbfqv7yTEyMs
-  dCXE8ItGXAbotcIWvueSkYIH
-  -----END PRIVATE KEY-----
-USERNAME: dolotinaelvira@empathetic-badger-rllf1u.com
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          JWT_KEY: ${{ secrets.JWT_KEY }}
+          USERNAME: ${{ secrets.USERNAME }}
         run: |
           chmod +x scripts/deploy.sh
           ./scripts/deploy.sh $BRANCH_NAME
