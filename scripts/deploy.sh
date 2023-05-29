@@ -43,26 +43,32 @@ process_flow_files() {
     local target_branch="master"
     local source_path="force-app/main/default"
 
-    echo "Processing flow files: $flow_files"
-    # shellcheck disable=SC2145
-    echo "Flow names: ${flow_names[@]}"
+     echo "Processing flow files: $flow_files"
+     # shellcheck disable=SC2145
+     echo "Flow names: ${flow_names[@]}"
 
     JWT_KEY_FILE=$(mktemp)
-    echo "$JWT_KEY" > "$JWT_KEY_FILE"
-    RANDOM_STRING=$(openssl rand -hex 5)
-    SCRATCH_ORG_DEFINITION="config/project-scratch-def.json"
-    echo "Scratch org alias: $RANDOM_STRING"
+        echo "$JWT_KEY" > "$JWT_KEY_FILE"
+        RANDOM_STRING=$(openssl rand -hex 5)
+        SCRATCH_ORG_DEFINITION="config/project-scratch-def.json"
+        echo "Scratch org alias: $RANDOM_STRING"
 
-    # Authentication using the key file
-    sfdx force:auth:jwt:grant --clientid "$CLIENT_ID" --jwtkeyfile "$JWT_KEY_FILE" --username "$USERNAME" --setdefaultdevhubusername
+        # Аутентификация с использованием ключевого файла
+        sfdx force:auth:jwt:grant --clientid "$CLIENT_ID" --jwtkeyfile "$JWT_KEY_FILE" --username "$USERNAME" --setdefaultdevhubusername
 
-    echo "Access granted"
+        echo "Access granted"
 
-    # Set alias for Dev Hub
-    sfdx force:config:set defaultdevhubusername="$USERNAME" --global
+        # Установка алиаса для Dev Hub
+        sfdx force:config:set defaultdevhubusername="$USERNAME" --global
 
-    # Create a new Scratch Org and retrieve the JSON response
-    SCRATCH_ORG_JSON=$(sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias "$RANDOM_STRING" --durationdays 7 -a "$RANDOM_STRING" --json)
+        # Создание новой Scratch org
+        sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias "$RANDOM_STRING" --durationdays 7 -a "$RANDOM_STRING"
+        echo "org created"
+
+        SCRATCH_ORG_URL=$(sfdx force:org:open -u "$RANDOM_STRING" --urlonly)
+        echo "SCRATCH_ORG_URL: $SCRATCH_ORG_URL"
+
+
 
     sfdx force:source:push -u "$RANDOM_STRING"
 
@@ -74,7 +80,7 @@ process_flow_files() {
     for file in $flow_files; do
         local file_path="${file%.flow-meta.xml}"
         local old_flow_file="old_$file_path.xml"
-        LABEL=$(grep -oP '(?<=<label>).*(?=</label>)' "$file" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+        LABEL= flokkkkkooooooooows
         QUERY=$(printf "SELECT+Id,MasterLabel+FROM+Flow__Flow+WHERE+Status+=+'Active'+AND+MasterLabel+=+'%s'" $LABEL)
 
         response=$(curl -s "$INSTANCE_URL/services/data/v52.0/tooling/query/?q=$QUERY" \
