@@ -32,6 +32,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install lxml
 
+      - name: Install Salesforce CLI
+        run: |
+          wget https://developer.salesforce.com/media/salesforce-cli/sfdx-linux-amd64.tar.xz -O sfdx.tar.xz
+          mkdir sfdx
+          tar xJf sfdx.tar.xz -C sfdx --strip-components 1
+          sudo ./sfdx/install
+          rm -rf sfdx sfdx.tar.xz
+
       - name: Run deploy script
         id: deploy_script
         env:
