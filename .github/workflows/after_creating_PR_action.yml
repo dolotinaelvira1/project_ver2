@@ -21,6 +21,15 @@ jobs:
           tar xzf ghcli.tar.gz
           sudo mv gh_2.29.0_linux_amd64/bin/gh /usr/local/bin/
           rm -rf gh_2.29.0_linux_amd64 ghcli.tar.gz
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install lxml
 
       - name: Run deploy script
         id: deploy_script
