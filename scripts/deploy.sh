@@ -27,12 +27,10 @@ check_flow_changes() {
         echo "Нет изменений в файлах Flow."
         exit 0
     fi
-    echo"modified_files $modified_files"
-    echo"flow_files $flow_files"
+    echo "flow_files $flow_files"
+    echo "modified_files $modified_files"
     process_flow_files "$flow_files"
 }
-
-
 
 # Обработка файлов Flow
 process_flow_files() {
@@ -54,9 +52,7 @@ process_flow_files() {
 # Проверка наличия зависимостей и запуск скрипта
 main() {
     check_dependencies
-     process_flow_files
-   # create_scratch_org "$(check_flow_changes)"
-
+    check_flow_changes
 }
 
 main
