@@ -68,8 +68,11 @@ def print_changes(changes, filename):
         new_value = change['new']
         path = change['path'].replace("{}", "")
         element = change['element'].replace("{}", "")
-        row = f"**File Name:** {filename}\n**{element}:**\n- Path: {path}\n- Old Value: {old_value}\n- New Value: {new_value}\n---"
-        print(row)
+        print(f"**File Name**: {filename} | **Element**: {element} | **Path**: {path} | **Old Value**: {old_value} | **New Value**: {new_value}")
+
+
+
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 4:
