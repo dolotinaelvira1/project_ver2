@@ -38,14 +38,14 @@ create_scratch_org() {
     RANDOM_STRING=$(openssl rand -hex 5)
     echo "Scratch org alias: $RANDOM_STRING"
 
-    # Аутентификация с использованием ключевого файла
-    sfdx force:auth:jwt:grant --clientid "$CLIENT_ID" --jwtkeyfile "$JWT_KEY_FILE" --username "$USERNAME" --setdefaultdevhubusername
 
-    echo "Access granted"
 
     # Установка алиаса для Dev Hub
     sfdx force:config:set defaultdevhubusername="$USERNAME" --global
+    # Аутентификация с использованием ключевого файла
+    sfdx force:auth:jwt:grant --clientid "$CLIENT_ID" --jwtkeyfile "$JWT_KEY_FILE" --username "$USERNAME" --setdefaultdevhubusername --set-default-dev-hub  --alias=DevHub
 
+    echo "Access granted"
     # Создание новой Scratch org
     sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias "$RANDOM_STRING" --durationdays 7 -a "$RANDOM_STRING"
     echo "org created"
