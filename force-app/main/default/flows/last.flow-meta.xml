@@ -3,7 +3,7 @@
     <apiVersion>57.0</apiVersion>
     <environments>Default</environments>
     <interviewLabel>flow {!$Flow.CurrentDateTime}</interviewLabel>
-    <label>flowael</label>
+    <label>flow</label>
     <processMetadataValues>
         <name>BuilderType</name>
         <value>
@@ -24,7 +24,7 @@
     </processMetadataValues>
     <processType>Flow</processType>
     <screens>
-        <name>tesi</name>
+        <name>test</name>
         <label>hdhdf</label>
         <locationX>176</locationX>
         <locationY>158</locationY>
