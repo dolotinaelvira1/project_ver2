@@ -32,35 +32,7 @@ check_flow_changes() {
     process_flow_files "$flow_files"
 }
 
-create_scratch_org() {
 
-    JWT_KEY_FILE=$(mktemp)
-    echo "$JWT_KEY" > "$JWT_KEY_FILE"
-    RANDOM_STRING=$(openssl rand -hex 5)
-    SCRATCH_ORG_DEFINITION="config/project-scratch-def.json"
-    echo "Scratch org alias: $RANDOM_STRING"
-
-    # Аутентификация с использованием ключевого файла
-    sfdx force:auth:jwt:grant --clientid "$CLIENT_ID" --jwtkeyfile "$JWT_KEY_FILE" --username "$USERNAME" --setdefaultdevhubusername
-
-    echo "Access granted"
-
-    # Установка алиаса для Dev Hub
-    sfdx force:config:set defaultdevhubusername="$USERNAME" --global
-
-    # Создание новой Scratch org
-    sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias "$RANDOM_STRING" --durationdays 7 -a "$RANDOM_STRING"
-    echo "org created"
-
-    SCRATCH_ORG_URL=$(sfdx force:org:open -u "$RANDOM_STRING" --urlonly)
-    echo "SCRATCH_ORG_URL: $SCRATCH_ORG_URL"
-
-    local scratch_org_url="$SCRATCH_ORG_URL"
-
-    sfdx force:source:push -u "$RANDOM_STRING"
-
-    rm "$JWT_KEY_FILE"
-}
 
 # Обработка файлов Flow
 process_flow_files() {
@@ -82,8 +54,9 @@ process_flow_files() {
 # Проверка наличия зависимостей и запуск скрипта
 main() {
     check_dependencies
+     process_flow_files
    # create_scratch_org "$(check_flow_changes)"
-    process_flow_files
+
 }
 
 main
