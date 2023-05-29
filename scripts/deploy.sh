@@ -35,13 +35,13 @@ create_scratch_org() {
     echo "$JWT_KEY" > "$JWT_KEY_FILE"
     RANDOM_STRING=$(openssl rand -hex 5)
     echo "Scratch org alias: $RANDOM_STRING"
-    sfdx force:auth:jwt:grant --client-id="$CLIENT_ID" --jwt-key-file="$JWT_KEY_FILE" --username="$USERNAME" --set-default-dev-hub  --alias=DevHub
+    sfdx force:auth:jwt:grant --clientid "$CLIENT_ID" --jwtkeyfile "$JWT_KEY_FILE" --username "$USERNAME" --setdefaultdevhubusername --alias DevHub
     echo "Access granted"
     # Create a new scratch org
-    sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias $RANDOM_STRING --durationdays 7 -a $RANDOM_STRING
+    sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias "$RANDOM_STRING" --durationdays 7 -a "$RANDOM_STRING"
     echo "org created"
-    SCRATCH_ORG_URL=$(sfdx force:org:open -u $RANDOM_STRING --urlonly)
-    echo "SCRATCH_ORG_URL : $SCRATCH_ORG_URL"
+    SCRATCH_ORG_URL=$(sfdx force:org:open -u "$RANDOM_STRING" --urlonly)
+    echo "SCRATCH_ORG_URL: $SCRATCH_ORG_URL"
     local scratch_org_url="https://example.com/scratch-org"
 
     echo "$scratch_org_url"
