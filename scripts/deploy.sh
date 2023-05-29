@@ -27,11 +27,13 @@ check_flow_changes() {
         echo "Нет изменений в файлах Flow."
         exit 0
     fi
-
+    echo"modified_files $modified_files"
+    echo"flow_files $flow_files"
     process_flow_files "$flow_files"
 }
 
 create_scratch_org() {
+
     JWT_KEY_FILE=$(mktemp)
     echo "$JWT_KEY" > "$JWT_KEY_FILE"
     RANDOM_STRING=$(openssl rand -hex 5)
@@ -56,26 +58,6 @@ create_scratch_org() {
     local scratch_org_url="$SCRATCH_ORG_URL"
 
     sfdx force:source:push -u "$RANDOM_STRING"
-    echo "modified_files $modified_files"
-
-    echo "flow_files $flow_files"
-    for file in $modified_files; do
-        local file_path="${file%.flow-meta.xml}"
-        local flow_list_output=$(sfdx force:flow:list -u "$RANDOM_STRING" --json)
-        local flow_id=$(echo "$flow_list_output" | grep -o '"id": "[^"]*' | sed 's/"id": "//')
-        flow_id=$(echo "$flow_id" | tr -d '\n')  # Удалить символы новой строки, если есть
-        if [[ -n "$flow_id" ]]; then
-            # Извлечение базовой части URL из SCRATCH_ORG_URL
-            local base_url="${SCRATCH_ORG_URL%/*}"
-            # Создание ссылки на открытие Flow в Flow Builder
-            local flow_builder_url="$base_url/flowBuilder.app?flowId=$flow_id"
-            echo "Flow Builder URL ($file_path): $flow_builder_url"
-            # Дальше выполняйте необходимые действия с ссылкой, например, открывайте в браузере
-        else
-            echo "Не удалось получить flow_id для файла $file."
-        fi
-    done
-
 
     rm "$JWT_KEY_FILE"
 }
@@ -100,7 +82,7 @@ process_flow_files() {
 # Проверка наличия зависимостей и запуск скрипта
 main() {
     check_dependencies
-    create_scratch_org "$(check_flow_changes)"
+   # create_scratch_org "$(check_flow_changes)"
     process_flow_files
 }
 
