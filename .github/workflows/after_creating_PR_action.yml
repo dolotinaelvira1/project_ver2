@@ -34,8 +34,6 @@ jobs:
 
       - name: Set up Salesforce DX
         uses: actions/setup-sfdx@v1
-        with:
-          sfdx-auth-url: ${{ secrets.SFDX_AUTH_URL }}
 
       - name: Install SFDX plugins
         run: |
