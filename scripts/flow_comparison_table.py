@@ -62,14 +62,14 @@ def get_element_name(element):
         return tag
 
 
-def print_changes_list(changes, file_name):
+def print_changes(changes, filename):
     for change in changes:
         old_value = change['old']
         new_value = change['new']
         path = change['path'].replace("{}", "")
         element = change['element'].replace("{}", "")
-        print(f"File: {file_name} | Element: {element} | Path: {path} | Old Value: {old_value} | New Value: {new_value}")
-
+        row = f"**File Name:** {filename}\n**{element}:**\n- Path: {path}\n- Old Value: {old_value}\n- New Value: {new_value}\n---"
+        print(row)
 
 if __name__ == "__main__":
     if len(sys.argv) != 4:
