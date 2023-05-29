@@ -32,15 +32,15 @@ check_flow_changes() {
 }
 create_scratch_org() {
     RANDOM_STRING=$(openssl rand -hex 5)
-    echo "Scratch org alias: $RANDOM_STRING"
+    echo "Scratch org alias: $RANDOM_STRING" >> logfile.txt
     # Authenticate with Salesforce using JWT flow
     sfdx force:auth:jwt:grant --client-id=3MVG9t0sl2P.pBypyUQ9QtrDHltVGOGkJTU5Zjv_F8c22JCzQS2P8ZVqlmUgcbkTqh5UyJt..B2Er9OUeDZGZ --jwt-key-file=C:/Users/dolot/JWT/server.key --username=dolotinaelvira@empathetic-badger-rllf1u.com --set-default-dev-hub  --alias=DevHub
-     echo "Access granted"
+     echo "Access granted" >> logfile.txt
     # Create a new scratch org
     sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias $RANDOM_STRING --durationdays 7 -a $RANDOM_STRING
-     echo "org created"
+     echo "org created" >> logfile.txt
     SCRATCH_ORG_URL=$(sfdx force:org:open -u $RANDOM_STRING --urlonly)
-    echo "SCRATCH_ORG_URL : $SCRATCH_ORG_URL"
+    echo "SCRATCH_ORG_URL : $SCRATCH_ORG_URL" >> logfile.txt
     local scratch_org_url="https://example.com/scratch-org"
 
     echo "$scratch_org_url"
