@@ -39,19 +39,11 @@ process_flow_files() {
 
     for file in $flow_files; do
         local file_path="${file%.flow-meta.xml}"
-        echo "Проверка старой версии в ветке: $target_branch ($BRANCH_NAME)"
-        echo "Путь к файлу: $source_path/flows/$file_path.flow-meta.xml"
-
         local old_flow_file="old_$file_path.xml"
         git show "origin/$target_branch:$source_path/flows/$file_path.flow-meta.xml" > "$old_flow_file"
         local new_flow_file="$source_path/flows/$file_path.flow-meta.xml"
-        echo "elvira $old_flow_file"
-        echo "elvira  $new_flow_file"
-        flow_comparison_output=$(python scripts/flow_comparison_table.py "$old_flow_file" "$new_flow_file")
-        echo "$flow_comparison_output" > output.txt
-        output=$(cat output.txt)
-        output="${output//$'\n'/<br>}"
-        echo "::set-output name=output::$output"
+        flow_comparison_output=$(python scripts/flow_comparison_table.py "$old_flow_file" "$new_flow_file" "$file")
+        echo -e "::set-output name=output::$flow_comparison_output"
         rm "$old_flow_file"
     done
 }
