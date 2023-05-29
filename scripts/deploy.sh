@@ -43,8 +43,8 @@ process_flow_files() {
         git show "origin/$target_branch:$source_path/flows/$file_path.flow-meta.xml" > "$old_flow_file"
         local new_flow_file="$source_path/flows/$file_path.flow-meta.xml"
         flow_comparison_output=$(python scripts/flow_comparison_table.py "$old_flow_file" "$new_flow_file" "$file")
+        flow_comparison_output="${flow_comparison_output//$'\n'/'%0A'}"  # Заменить символы новой строки на %0A
         echo -e "::set-output name=output::$flow_comparison_output"
-        rm "$old_flow_file"
     done
 }
 
