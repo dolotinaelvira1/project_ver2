@@ -95,3 +95,10 @@ echo "$QUERY"
 
 }
 
+# Проверка наличия зависимостей и запуск скрипта
+main() {
+    check_dependencies
+    check_flow_changes
+}
+
+main
