@@ -77,33 +77,31 @@ process_flow_files() {
     INSTANCE_URL=$(sfdx force:org:display --json | jq -r '.result.instanceUrl')
     ACCESS_TOKEN=$(sfdx force:org:display --json | jq -r '.result.accessToken')
 
-    for file in $flow_files; do
-        local file_path="${file%.flow-meta.xml}"
-        local old_flow_file="old_$file_path.xml"
-        LABEL="flokkkkkooooooooows"
-        QUERY=$(printf "SELECT+Id,MasterLabel+FROM+Flow__Flow+WHERE+Status+=+'Active'+AND+MasterLabel+=+'%s'" $LABEL)
+   for file in $flow_files; do
+       local file_path="${file%.flow-meta.xml}"
+       local old_flow_file="old_$file_path.xml"
+       LABEL="flokkkkkooooooooows"
+       QUERY=$(printf "SELECT+Id,MasterLabel+FROM+Flow__Flow+WHERE+Status+=+'Active'+AND+MasterLabel+=+'%s'" $LABEL)
 
-        response=$(curl -s "$INSTANCE_URL/services/data/v52.0/tooling/query/?q=$QUERY" \
-          -H "Authorization: Bearer $ACCESS_TOKEN" \
-          -H "Content-Type: application/json" \
-          -H "X-PrettyPrint:1")
+       response=$(curl -s "$INSTANCE_URL/services/data/v52.0/tooling/query/?q=$QUERY" \
+         -H "Authorization: Bearer $ACCESS_TOKEN" \
+         -H "Content-Type: application/json" \
+         -H "X-PrettyPrint:1")
 
-        # Now you can use the $response variable in your script. For example, you can print it:
-        echo "$response"
+       # Now you can use the $response variable in your script. For example, you can print it:
+       echo "$response"
 
-        FLOW_LINK="https://$SCRATCH_ORG_URL/lightning/r/Flow/$FLOW_ID/view"
+       FLOW_LINK="https://$SCRATCH_ORG_URL/lightning/r/Flow/$FLOW_ID/view"
 
+       echo "Flow Link: $FLOW_LINK"
 
+       git show "origin/$target_branch:$source_path/flows/$file_path.flow-meta.xml" > "$old_flow_file"
+       local new_flow_file="$source_path/flows/$file_path.flow-meta.xml"
+       flow_comparison_output=$(python scripts/flow_comparison_table.py "$old_flow_file" "$new_flow_file" "$file")
+       flow_comparison_output="${flow_comparison_output//$'\n'/'%0A'}"  # Replace newline characters with %0A
+       echo -e "::set-output name=output::$flow_comparison_output"
+   done
 
-
-        echo "Flow Link: $FLOW_LINK"
-
-        git show "origin/$target_branch:$source_path/flows/$file_path.flow-meta.xml" > "$old_flow_file"
-        local new_flow_file="$source_path/flows/$file_path.flow-meta.xml"
-        flow_comparison_output=$(python scripts/flow_comparison_table.py "$old_flow_file" "$new_flow_file" "$file")
-        flow_comparison_output="${flow_comparison_output//$'\n'/'%0A'}"  # Replace newline characters with %0A
-        echo -e "::set-output name=output::$flow_comparison_output"
-    done
 }
 
 
