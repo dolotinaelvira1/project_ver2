@@ -70,7 +70,7 @@ process_flow_files() {
 
     rm "$JWT_KEY_FILE"
 
-         FLOWS_IN_ORG=$(sfdx force:data:record:get -s Flow -w "Status='Active'" "MasterLabel = 'flowww'" -t -u $USERNAME)
+         FLOWS_IN_ORG=$(sfdx force:data:record:get -s Flow -w "Status='Active' MasterLabel = 'flowww'" -t -u $USERNAME)
          echo "FLOWS_IN_ORG: $FLOWS_IN_ORG"
 
     for file in $flow_files; do
