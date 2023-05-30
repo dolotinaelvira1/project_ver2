@@ -47,24 +47,6 @@ process_flow_files() {
      # shellcheck disable=SC2145
      echo "Flow names: ${flow_names[@]}"
 
-
-
-
-
-     # Use the access token for further API requests
-     # Example: Make a Tooling API query request
-     INSTANCE_URL=$(sfdx force:org:display --json | jq -r '.result.instanceUrl')
-     API_VERSION=$(sfdx force:org:display --json | jq -r '.result.defaultApiVersion')
-     SOQL_QUERY="YOUR_SOQL_QUERY"
-
-     QUERY_URL="${INSTANCE_URL}/services/data/${API_VERSION}/tooling/query?q=${SOQL_QUERY}"
-
-     RESPONSE=$(curl -X GET -H "Authorization: Bearer ${ACCESS_TOKEN}" -H "X-PrettyPrint: 1" "${QUERY_URL}")
-
-     echo "Query response:"
-     echo "${RESPONSE}"
-
-
     JWT_KEY_FILE=$(mktemp)
         echo "$JWT_KEY" > "$JWT_KEY_FILE"
         RANDOM_STRING=$(openssl rand -hex 5)
@@ -74,23 +56,8 @@ process_flow_files() {
         # Аутентификация с использованием ключевого файла
         sfdx force:auth:jwt:grant --clientid "$CLIENT_ID" --jwtkeyfile "$JWT_KEY_FILE" --username "$USERNAME" --setdefaultdevhubusername
 
-
         echo "Access granted"
 
-     # Step 1: Run the sfdx force:auth:jwt:grant command
-     RESULT=$(sfdx force:auth:jwt:grant --clientid "$CLIENT_ID" --jwtkeyfile "$JWT_KEY_FILE" --username "$USERNAME" --setdefaultdevhubusername)
-
-     # Check the command result
-     if [[ $RESULT =~ "Successfully authorized" ]]; then
-       echo "Authentication successful!"
-     else
-       echo "Authentication failed. Please check your client ID, JWT key file, and username."
-       exit 1
-     fi
-     echo "RESULT $RESULT"
-      # Extract the access token from the command result
-          ACCESS_TOKEN=$(echo "$RESULT" | grep -oP '(?<=access token=)[^&]+')
-           echo "ACCESS_TOKEN $ACCESS_TOKEN"
         # Установка алиаса для Dev Hub
         sfdx force:config:set defaultdevhubusername="$USERNAME" --global
 
@@ -102,30 +69,33 @@ process_flow_files() {
         echo "SCRATCH_ORG_URL: $SCRATCH_ORG_URL"
 
 
-
     sfdx force:source:push -u "$RANDOM_STRING"
 
+    rm "$JWT_KEY_FILE"
 
+         FLOWS_IN_ORG=$(sfdx force:flow:list)
+         echo "FLOWS_IN_ORG: $FLOWS_IN_ORG"
 
-LABEL="flaoopppw"
-INSTANCE_URL=$(sfdx force:org:display --json | jq -r '.result.instanceUrl')
-API_VERSION=$(sfdx force:org:display --json | jq -r '.result.defaultApiVersion')
-echo "INSTANCE_URL $INSTANCE_URL"
-echo "API_VERSION $API_VERSION"
-SOQL_QUERY="YOUR_SOQL_QUERY"
+    for file in $flow_files; do
+        local file_path="${file%.flow-meta.xml}"
+        local old_flow_file="old_$file_path.xml"
 
-QUERY_URL="${INSTANCE_URL}/services/data/${API_VERSION}/tooling/query?q=${SOQL_QUERY}"
-
-RESPONSE=$(curl -X GET -H "Authorization: Bearer ${ACCESS_TOKEN}" -H "X-PrettyPrint: 1" "${QUERY_URL}")
-
-echo "Query response:"
-echo "${RESPONSE}"
 
         FLOW_LINK="https://$SCRATCH_ORG_URL/lightning/r/Flow/$FLOW_ID/view"
 
+
+
+
         echo "Flow Link: $FLOW_LINK"
-    rm "$JWT_KEY_FILE"
+
+        git show "origin/$target_branch:$source_path/flows/$file_path.flow-meta.xml" > "$old_flow_file"
+        local new_flow_file="$source_path/flows/$file_path.flow-meta.xml"
+        flow_comparison_output=$(python scripts/flow_comparison_table.py "$old_flow_file" "$new_flow_file" "$file")
+        flow_comparison_output="${flow_comparison_output//$'\n'/'%0A'}"  # Replace newline characters with %0A
+        echo -e "::set-output name=output::$flow_comparison_output"
+    done
 }
+
 
 # Проверка наличия зависимостей и запуск скрипта
 main() {
