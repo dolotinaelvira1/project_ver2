@@ -13,7 +13,7 @@ if [ -n "$access_token" ]; then
   INSTANCE_URL="https://empathetic-badger-rllf1u-dev-ed.trailblaze.lightning.force.com"
   LABEL="flaoopppw"
   QUERY=$(printf "SELECT+Id,MasterLabel+FROM+Flow__Flow+WHERE+Status+=+'Active'+AND+MasterLabel+=+'%s'" "$LABEL")
-
+  echo "QUERY: $QUERY"
   response=$(curl -s "$INSTANCE_URL/services/data/v52.0/tooling/query/?q=$QUERY" \
     -H "Authorization: Bearer $access_token" \
     -H "Content-Type: application/json" \
