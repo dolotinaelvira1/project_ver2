@@ -1,5 +1,5 @@
 # Выполняем аутентификацию с использованием ключевого файла JWT
-auth_result=$(sfdx force:auth:jwt:grant --client-id=3MVG9t0sl2P.pBypyUQ9QtrDHltVGOGkJTU5Zjv_F8c22JCzQS2P8ZVqlmUgcbkTqh5UyJt..B2Er9OUeDZGZ --jwt-key-file=C:/Users/dolot/JWT/server.key --username=dolotinaelvira@empathetic-badger-rllf1u.com --set-default-dev-hub  --alias=DevHub)
+auth_result=$(sfdx force:auth:jwt:grant --clientid "$CLIENT_ID" --jwtkeyfile "$JWT_KEY_FILE" --username "$USERNAME" --setdefaultdevhubusername)
 
 # Извлекаем ACCESS_TOKEN из вывода команды
 access_token=$(echo "$auth_result" | awk '/access token:/ {print $3}')
