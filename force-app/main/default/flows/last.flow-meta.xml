@@ -2,8 +2,8 @@
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>57.0</apiVersion>
     <environments>Default</environments>
-    <interviewLabel>flow {!$Flow.CurrentDateTime}</interviewLabel>
-    <label>flowww</label>
+    <interviewLabel>last {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>last</label>
     <processMetadataValues>
         <name>BuilderType</name>
         <value>
@@ -24,8 +24,8 @@
     </processMetadataValues>
     <processType>Flow</processType>
     <screens>
-        <name>testname</name>
-        <label>hdhdf</label>
+        <name>test</name>
+        <label>testik</label>
         <locationX>176</locationX>
         <locationY>158</locationY>
         <allowBack>true</allowBack>
