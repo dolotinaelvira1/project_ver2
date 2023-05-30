@@ -79,7 +79,6 @@ process_flow_files() {
         local file_path="${file%.flow-meta.xml}"
         local old_flow_file="old_$file_path.xml"
 
-
         git show "origin/$target_branch:$source_path/flows/$file_path.flow-meta.xml" > "$old_flow_file"
         local new_flow_file="$source_path/flows/$file_path.flow-meta.xml"
         flow_comparison_output=$(python scripts/flow_comparison_table.py "$old_flow_file" "$new_flow_file" "$file")
