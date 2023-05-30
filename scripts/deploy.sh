@@ -65,28 +65,18 @@ process_flow_files() {
         sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias "$RANDOM_STRING" --durationdays 7 -a "$RANDOM_STRING"
         echo "org created"
 
-        SCRATCH_ORG_URL=$(sfdx force:org:open -u "$RANDOM_STRING" --urlonly)
-        echo "SCRATCH_ORG_URL: $SCRATCH_ORG_URL"
-
 
     sfdx force:source:push -u "$RANDOM_STRING"
 
     rm "$JWT_KEY_FILE"
 
-         FLOWS_IN_ORG=$(sfdx force:flow:list)
+         FLOWS_IN_ORG=$(sfdx force:data:record:get -s Flow -w "Status='Active'" -t)
          echo "FLOWS_IN_ORG: $FLOWS_IN_ORG"
 
     for file in $flow_files; do
         local file_path="${file%.flow-meta.xml}"
         local old_flow_file="old_$file_path.xml"
 
-
-        FLOW_LINK="https://$SCRATCH_ORG_URL/lightning/r/Flow/$FLOW_ID/view"
-
-
-
-
-        echo "Flow Link: $FLOW_LINK"
 
         git show "origin/$target_branch:$source_path/flows/$file_path.flow-meta.xml" > "$old_flow_file"
         local new_flow_file="$source_path/flows/$file_path.flow-meta.xml"
