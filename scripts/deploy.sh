@@ -64,6 +64,8 @@ process_flow_files() {
         # Создание новой Scratch org
         sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias "$RANDOM_STRING" --durationdays 7 -a "$RANDOM_STRING"
         echo "org created"
+        SCRATCH_ORG_URL=$(sfdx force:org:open -u $RANDOM_STRING --urlonly)
+        echo "SCRATCH_ORG_URL : $SCRATCH_ORG_URL"
 
 
     sfdx force:source:push -u "$RANDOM_STRING"
