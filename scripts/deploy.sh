@@ -47,6 +47,24 @@ process_flow_files() {
      # shellcheck disable=SC2145
      echo "Flow names: ${flow_names[@]}"
 
+
+
+
+
+     # Use the access token for further API requests
+     # Example: Make a Tooling API query request
+     INSTANCE_URL=$(sfdx force:org:display --json | jq -r '.result.instanceUrl')
+     API_VERSION=$(sfdx force:org:display --json | jq -r '.result.defaultApiVersion')
+     SOQL_QUERY="YOUR_SOQL_QUERY"
+
+     QUERY_URL="${INSTANCE_URL}/services/data/${API_VERSION}/tooling/query?q=${SOQL_QUERY}"
+
+     RESPONSE=$(curl -X GET -H "Authorization: Bearer ${ACCESS_TOKEN}" -H "X-PrettyPrint: 1" "${QUERY_URL}")
+
+     echo "Query response:"
+     echo "${RESPONSE}"
+
+
     JWT_KEY_FILE=$(mktemp)
         echo "$JWT_KEY" > "$JWT_KEY_FILE"
         RANDOM_STRING=$(openssl rand -hex 5)
@@ -56,8 +74,23 @@ process_flow_files() {
         # Аутентификация с использованием ключевого файла
         sfdx force:auth:jwt:grant --clientid "$CLIENT_ID" --jwtkeyfile "$JWT_KEY_FILE" --username "$USERNAME" --setdefaultdevhubusername
 
+
         echo "Access granted"
 
+     # Step 1: Run the sfdx force:auth:jwt:grant command
+     RESULT=$(sfdx force:auth:jwt:grant --clientid "$CLIENT_ID" --jwtkeyfile "$JWT_KEY_FILE" --username "$USERNAME" --setdefaultdevhubusername)
+
+     # Check the command result
+     if [[ $RESULT =~ "Successfully authorized" ]]; then
+       echo "Authentication successful!"
+     else
+       echo "Authentication failed. Please check your client ID, JWT key file, and username."
+       exit 1
+     fi
+     echo "RESULT $RESULT"
+      # Extract the access token from the command result
+          ACCESS_TOKEN=$(echo "$RESULT" | grep -oP '(?<=access token=)[^&]+')
+           echo "ACCESS_TOKEN $ACCESS_TOKEN"
         # Установка алиаса для Dev Hub
         sfdx force:config:set defaultdevhubusername="$USERNAME" --global
 
@@ -72,27 +105,26 @@ process_flow_files() {
 
     sfdx force:source:push -u "$RANDOM_STRING"
 
-    rm "$JWT_KEY_FILE"
 
-    INSTANCE_URL=$(sfdx force:org:display --json | jq -r '.result.instanceUrl')
-    ACCESS_TOKEN=$(sfdx force:org:display --json | jq -r '.result.accessToken')
-echo "$INSTANCE_URL"
- echo "$ACCESS_TOKEN"
-        LABEL="flaoopppw"
-        QUERY=$(printf "SELECT+Id,MasterLabel+FROM+Flow__Flow+WHERE+Status+=+'Active'+AND+MasterLabel+=+'%s'" $LABEL)
-echo "$QUERY"
-        response=$(curl -s "$INSTANCE_URL/services/data/v52.0/tooling/query/?q=$QUERY" \
-          -H "Authorization: Bearer $ACCESS_TOKEN" \
-          -H "Content-Type: application/json" \
-          -H "X-PrettyPrint:1")
 
-        # Now you can use the $response variable in your script. For example, you can print it:
-        echo "$response"
+LABEL="flaoopppw"
+INSTANCE_URL=$(sfdx force:org:display --json | jq -r '.result.instanceUrl')
+API_VERSION=$(sfdx force:org:display --json | jq -r '.result.defaultApiVersion')
+echo "INSTANCE_URL $INSTANCE_URL"
+echo "API_VERSION $API_VERSION"
+SOQL_QUERY="YOUR_SOQL_QUERY"
+
+QUERY_URL="${INSTANCE_URL}/services/data/${API_VERSION}/tooling/query?q=${SOQL_QUERY}"
+
+RESPONSE=$(curl -X GET -H "Authorization: Bearer ${ACCESS_TOKEN}" -H "X-PrettyPrint: 1" "${QUERY_URL}")
+
+echo "Query response:"
+echo "${RESPONSE}"
 
         FLOW_LINK="https://$SCRATCH_ORG_URL/lightning/r/Flow/$FLOW_ID/view"
 
         echo "Flow Link: $FLOW_LINK"
-
+    rm "$JWT_KEY_FILE"
 }
 
 # Проверка наличия зависимостей и запуск скрипта
