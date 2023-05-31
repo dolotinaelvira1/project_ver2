@@ -81,7 +81,7 @@ process_flow_files() {
     local old_flow_file="old_$file_path.xml"
     FLOWS_IN_ORG=$(sfdx force:data:record:get  -s FlowDefinition -w "DeveloperName=$file_path" -t -u $RANDOM_STRING --json)
     echo "FLOWS_IN_ORG: $FLOWS_IN_ORG"
-    FLOW_ID=$(echo "$FLOWS_IN_ORG" | jq -r '.result.Id')
+    FLOW_ID=$(echo "$FLOWS_IN_ORG" | jq -r '.result.ActiveVersionId')
     echo "FLOW_ID: $FLOW_ID"
     LINK_TO_FLOW="${INSTANCE_URL}secur/frontdoor.jsp?sid=${SID}&retURL=/builder_platform_interaction/flowBuilder.app?flowId=${FLOW_ID}"
     git show "origin/$target_branch:$source_path/flows/$file_path.flow-meta.xml" >"$old_flow_file"
