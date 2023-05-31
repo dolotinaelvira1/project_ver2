@@ -12,39 +12,43 @@ check_dependencies() {
 }
 
 # Проверка наличия измененных файлов Flow
-check_flow_changes() {
+check_and_process_files() {
+  local file_suffix=$1
   local modified_files
-  modified_files=$(git diff origin/master...origin/$BRANCH_NAME --name-only | grep -i "flow-meta.xml")
+  modified_files=$(git diff origin/master...origin/"$BRANCH_NAME" --name-only | grep -i "$file_suffix")
+
   if [[ -z "$modified_files" ]]; then
-    echo "Нет изменений в файлах Flow."
-    exit 0
+    echo "Нет изменений в файлах с суффиксом $file_suffix."
+    return
   fi
 
-  local flow_files
-  flow_files=$(echo "$modified_files" | grep -E '^[^.]+\.(flow-meta\.xml)$' | xargs -r basename)
+  local files
+  files=($(echo "$modified_files" | grep -E '^[^.]+\.'"$file_suffix" | xargs -r basename))
 
-  if [[ -z "$flow_files" ]]; then
-    echo "Нет изменений в файлах Flow."
-    exit 0
+  if [[ -z "$files" ]]; then
+    echo "Нет изменений в файлах с суффиксом $file_suffix."
+    return
   fi
 
-  for filename in "${flow_files[@]}"; do
-    flow_name=${filename%.flow-meta.xml}
-    flow_names+=("$flow_name")
+  local names=()
+
+  for filename in "${files[@]}"; do
+    local name=${filename%.$file_suffix}
+    names+=("$name")
   done
 
-  process_flow_files "$flow_files" "${flow_names[@]}"
+  process_files "$files" "${names[@]}" "$file_suffix"
 }
 
-# Обработка файлов Flow
-process_flow_files() {
-  local flow_files=$1
+process_files() {
+  local files=$1
+  local names=$2
+  local file_suffix=$3
   local target_branch="master"
   local source_path="force-app/main/default"
 
-  echo "Processing flow files: $flow_files"
-  # shellcheck disable=SC2145
-  echo "Flow names: ${flow_names[@]}"
+  echo "Processing files with suffix $file_suffix: $files"
+  echo "File names: ${names[@]}"
 
   JWT_KEY_FILE=$(mktemp)
   echo "$JWT_KEY" >"$JWT_KEY_FILE"
@@ -76,28 +80,87 @@ process_flow_files() {
 
   rm "$JWT_KEY_FILE"
 
-  for file in $flow_files; do
-    local file_path="${file%.flow-meta.xml}"
-    local old_flow_file="old_$file_path.xml"
-    FLOWS_IN_ORG=$(sfdx force:data:record:get  -s FlowDefinition -w "DeveloperName=$file_path" -t -u $RANDOM_STRING --json)
-    echo "FLOWS_IN_ORG: $FLOWS_IN_ORG"
-    FLOW_ID=$(echo "$FLOWS_IN_ORG" | jq -r '.result.ActiveVersionId')
-    echo "FLOW_ID: $FLOW_ID"
-    LINK_TO_FLOW="${INSTANCE_URL}secur/frontdoor.jsp?sid=${SID}&retURL=/builder_platform_interaction/flowBuilder.app?flowId=${FLOW_ID}"
-    git show "origin/$target_branch:$source_path/flows/$file_path.flow-meta.xml" >"$old_flow_file"
-    local new_flow_file="$source_path/flows/$file_path.flow-meta.xml"
-    flow_comparison_output=$(python scripts/flow_comparison_table.py "$old_flow_file" "$new_flow_file" "$file")
-    flow_comparison_output="${flow_comparison_output//$'\n'/'%0A'}" # Replace newline characters with %0A
-    combined_output="${flow_comparison_output}
-        Link to Flow: $LINK_TO_FLOW"
+  for file in "${files[@]}"; do
+    local file_path="${file%.$file_suffix}"
+    local old_file="old_$file_path.xml"
+    local object_path=""
+
+    if [[ $file_suffix == "flow-meta.xml" ]]; then
+      source_path="force-app/main/default/flows"
+
+    elif [[ $file_suffix == "flexipage-meta.xml" ]]; then
+      source_path="force-app/main/default/flexipages"
+
+    elif [[ $file_suffix == "object-meta.xml" ]]; then
+      source_path="force-app/main/default/objects"
+      object_path="$(basename "$file" ".$file_suffix" | cut -d'.' -f2)/"
+
+    elif [[ $file_suffix == "field-meta.xml" ]]; then
+          source_path="force-app/main/default/objects"
+          object_path="$(basename "$file" ".$file_suffix" | cut -d'-' -f1)/fields"
+
+    elif [[ $file_suffix == "validationRule-meta.xml" ]]; then
+      source_path="force-app/main/default/objects"
+      object_path="$(basename "$file" ".$file_suffix" | cut -d'-' -f1)/validationRules"
+    fi
+
+    git show "origin/$target_branch:$source_path/$object_path$file_path.$file_suffix" >"$old_file"
+    local new_file="$source_path/$object_path$file_path.$file_suffix"
+    local comparison_output=$(python scripts/flow_comparison_table.py "$old_file" "$new_file" "$file")
+    comparison_output="${comparison_output//$'\n'/'%0A'}" # Replace newline characters with %0A
+    local LINK_TO_FILE=$(generate_link "$file" "$file_path" "$file_suffix")
+    local combined_output="${comparison_output} Link to File: $LINK_TO_FILE"
     echo -e "::set-output name=output::$combined_output"
   done
 }
 
+generate_link() {
+  local file=$1
+  local file_path=$2
+  local file_suffix=$3
+
+local objectName=""
+    if [[ $file_suffix == "object-meta.xml" ]]; then
+        objectName=$(basename "$file" ".$file_suffix" | cut -d'.' -f2)
+    elif [[ $file_suffix == "validationRule-meta.xml" ]]; then
+        objectName=$(basename "$(dirname "$file")")
+    elif [[ $file_suffix == "field-meta.xml" ]]; then
+        objectName=$(basename "$(dirname "$(dirname "$file")")")
+    fi
+
+  if [[ $file_suffix == "flow-meta.xml" ]]; then
+    local FLOW=$(sfdx force:data:record:get -s FlowDefinition -w "DeveloperName=$file_path" -t -u $RANDOM_STRING --json)
+    local FLOW_ID=$(echo "$FLOW" | jq -r '.result.ActiveVersionId')
+    echo "${INSTANCE_URL}secur/frontdoor.jsp?sid=${SID}&retURL=/builder_platform_interaction/flowBuilder.app?flowId=${FLOW_ID}"
+
+  elif [[ $file_suffix == "flexipage-meta.xml" ]]; then
+    local appBuilder=$(sfdx force:data:record:get -s FlexiPage -w "DeveloperName=$file_path" -t -u $RANDOM_STRING --json)
+    local appBuilder_ID=$(echo "$appBuilder" | jq -r '.result.ActiveVersionId')
+    echo "${INSTANCE_URL}secur/frontdoor.jsp?sid=${SID}&retURL=/visualEditor/appBuilder.app?id=${appBuilder_ID}"
+
+  elif [[ $file_suffix == "object-meta.xml" ]]; then
+    echo "${INSTANCE_URL}secur/frontdoor.jsp?sid=${SID}&retURL=/lightning/setup/ObjectManager/${objectName}/Details/view"
+
+  elif [[ $file_suffix == "field-meta.xml" ]]; then
+    echo "${INSTANCE_URL}secur/frontdoor.jsp?sid=${SID}&retURL=/lightning/setup/ObjectManager/${objectName}/FieldsAndRelationships/${file_path}/view"
+
+  elif [[ $file_suffix == "validationRule-meta.xml" ]]; then
+    local VALIDATION_RULE=$(sfdx force:data:record:get -s ValidationRule -w "ValidationName=$file_path" -t -u $RANDOM_STRING --json)
+    local VALIDATION_RULE_ID=$(echo "$VALIDATION_RULE" | jq -r '.result.Id')
+    echo "${INSTANCE_URL}/secur/frontdoor.jsp?sid=${SID}&retURL=/lightning/setup/ObjectManager/${objectName}/ValidationRules/${VALIDATION_RULE_ID}/view"
+  else
+    echo "Неизвестный тип файла: $file_suffix"
+  fi
+
+}
 # Проверка наличия зависимостей и запуск скрипта
+
 main() {
-  check_dependencies
-  check_flow_changes
+  check_and_process_files "field-meta.xml"
+  check_and_process_files "flow-meta.xml"
+  check_and_process_files "flexipage-meta.xml"
+  check_and_process_files "object-meta.xml"
+  check_and_process_files "validationRule-meta.xml"
 }
 
 main

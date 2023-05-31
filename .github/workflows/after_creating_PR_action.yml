@@ -65,4 +65,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
         run: |
           output="${{ steps.deploy_script.outputs.output }}"
+          echo "Output before comment: $output"  # Add this line for debugging
           gh pr comment ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --body "$output"
