@@ -25,7 +25,7 @@
     <processType>Flow</processType>
     <screens>
         <name>test</name>
-        <label>test3</label>
+        <label>test2</label>
         <locationX>176</locationX>
         <locationY>158</locationY>
         <allowBack>true</allowBack>
