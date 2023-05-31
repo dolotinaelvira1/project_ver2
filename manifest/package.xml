@@ -4,5 +4,21 @@
         <members>*</members>
         <name>Flow</name>
     </types>
+    <types>
+        <members>Contact</members>
+        <name>CustomObject</name>
+    </types>
+    <types>
+        <members>Contact.CustomField__c</members>
+        <name>CustomField</name>
+    </types>
+    <types>
+        <members>Contact.CustomValidationRule</members>
+        <name>ValidationRule</name>
+    </types>
+    <types>
+        <members>MyFlexiPage</members>
+        <name>FlexiPage</name>
+    </types>
     <version>57.0</version>
 </Package>
