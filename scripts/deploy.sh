@@ -80,7 +80,7 @@ echo "INSTANCE_URL : $INSTANCE_URL"
     for file in $flow_files; do
         local file_path="${file%.flow-meta.xml}"
         local old_flow_file="old_$file_path.xml"
-         FLOWS_IN_ORG=$(sfdx force:data:record:get -s FlowDefinition -w "DeveloperName=$file_path" -t -u $USERNAME)
+         FLOWS_IN_ORG=$(sfdx force:data:record:get -s FlowDefinition -w "DeveloperName=$file_path" -t -u $USERNAME --json)
          echo "FLOWS_IN_ORG: $FLOWS_IN_ORG"
          FLOW_ID=$(echo "$FLOWS_IN_ORG" | jq -r '.Id')
          echo "FLOW_ID: $FLOW_ID"
