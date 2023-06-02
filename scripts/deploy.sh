@@ -5,7 +5,7 @@ check_dependencies() {
   local dependencies=("git" "grep" "xargs" "basename")
   for dep in "${dependencies[@]}"; do
     if ! command -v "$dep" >/dev/null 2>&1; then
-      echo "Необходимая утилита $dep не найдена. Установите ее и повторите попытку."
+      echo "Požadovaný nástroj $dep nebyl nalezen. Nainstalujte ho a zkuste to znovu."
       exit 1
     fi
   done
@@ -18,7 +18,7 @@ check_and_process_files() {
   modified_files=$(git diff origin/master...origin/"$BRANCH_NAME" --name-only | grep -i "$file_suffix")
 
   if [[ -z "$modified_files" ]]; then
-    echo "Нет изменений в файлах с суффиксом $file_suffix."
+    echo "no changes  found with suffix $file_suffix."
     return
   fi
 
@@ -26,7 +26,7 @@ check_and_process_files() {
   files=($(echo "$modified_files" | grep -E '^[^.]+\.'"$file_suffix" | xargs -r basename))
 
   if [[ -z "$files" ]]; then
-    echo "Нет изменений в файлах с суффиксом $file_suffix."
+    echo "no changes found with suffix $file_suffix."
     return
   fi
 
@@ -55,16 +55,9 @@ process_files() {
   RANDOM_STRING=$(openssl rand -hex 5)
   SCRATCH_ORG_DEFINITION="config/project-scratch-def.json"
   echo "Scratch org alias: $RANDOM_STRING"
-
-  # Аутентификация с использованием ключевого файла
   sfdx force:auth:jwt:grant --clientid "$CLIENT_ID" --jwtkeyfile "$JWT_KEY_FILE" --username "$USERNAME" --setdefaultdevhubusername
-
   echo "Access granted"
-
-  # Установка алиаса для Dev Hub
   sfdx force:config:set defaultdevhubusername="$USERNAME" --global
-
-  # Создание новой Scratch org
   sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias "$RANDOM_STRING" --durationdays 7 -a "$RANDOM_STRING"
   echo "org created"
   SCRATCH_ORG_URL=$(sfdx force:org:open -u $RANDOM_STRING --urlonly)
@@ -96,8 +89,8 @@ process_files() {
       object_path="$(basename "$file" ".$file_suffix" | cut -d'.' -f2)/"
 
     elif [[ $file_suffix == "field-meta.xml" ]]; then
-          source_path="force-app/main/default/objects"
-          object_path="$(basename "$file" ".$file_suffix" | cut -d'-' -f1)/fields"
+      source_path="force-app/main/default/objects"
+      object_path="$(basename "$file" ".$file_suffix" | cut -d'-' -f1)/fields"
 
     elif [[ $file_suffix == "validationRule-meta.xml" ]]; then
       source_path="force-app/main/default/objects"
@@ -119,14 +112,14 @@ generate_link() {
   local file_path=$2
   local file_suffix=$3
 
-local objectName=""
-    if [[ $file_suffix == "object-meta.xml" ]]; then
-        objectName=$(basename "$file" ".$file_suffix" | cut -d'.' -f2)
-    elif [[ $file_suffix == "validationRule-meta.xml" ]]; then
-        objectName=$(basename "$(dirname "$file")")
-    elif [[ $file_suffix == "field-meta.xml" ]]; then
-        objectName=$(basename "$(dirname "$(dirname "$file")")")
-    fi
+  local objectName=""
+  if [[ $file_suffix == "object-meta.xml" ]]; then
+    objectName=$(basename "$file" ".$file_suffix" | cut -d'.' -f2)
+  elif [[ $file_suffix == "validationRule-meta.xml" ]]; then
+    objectName=$(basename "$(dirname "$file")")
+  elif [[ $file_suffix == "field-meta.xml" ]]; then
+    objectName=$(basename "$(dirname "$(dirname "$file")")")
+  fi
 
   if [[ $file_suffix == "flow-meta.xml" ]]; then
     local FLOW=$(sfdx force:data:record:get -s FlowDefinition -w "DeveloperName=$file_path" -t -u $RANDOM_STRING --json)
@@ -153,7 +146,6 @@ local objectName=""
   fi
 
 }
-# Проверка наличия зависимостей и запуск скрипта
 
 main() {
   check_and_process_files "field-meta.xml"
