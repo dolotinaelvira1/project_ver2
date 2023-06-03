@@ -17,6 +17,9 @@ check_and_process_files() {
   local modified_files
   modified_files=$(git diff origin/master...origin/"$BRANCH_NAME" --name-only | grep -i "$file_suffix")
 
+  pathtofile = $(git diff origin/master...origin/"$BRANCH_NAME")
+  echo "modified_files $modified_files"
+  echo "pathtofile $pathtofile"
   if [[ -z "$modified_files" ]]; then
     echo "no changes  found with suffix $file_suffix."
     return
