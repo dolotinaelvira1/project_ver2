@@ -17,9 +17,6 @@ check_and_process_files() {
   local modified_files
   modified_files=$(git diff origin/master...origin/"$BRANCH_NAME" --name-only | grep -i "$file_suffix")
 
-  pathtofile = $(git diff origin/master...origin/"$BRANCH_NAME")
-  echo "modified_files $modified_files"
-  echo "pathtofile $pathtofile"
   if [[ -z "$modified_files" ]]; then
     echo "no changes  found with suffix $file_suffix."
     return
@@ -40,53 +37,29 @@ check_and_process_files() {
     names+=("$name")
   done
 
-  process_files "$files" "${names[@]}" "$file_suffix"
+  process_files "$files" "${names[@]}" "$file_suffix" "$modified_files"
 }
 
 process_files() {
   local files=$1
   local names=$2
   local file_suffix=$3
+  local modified_files=$4
   local target_branch="master"
 
-  echo "Processing files with suffix $file_suffix: $files"
-  echo "File names: ${names[@]}"
 
 
   for file in "${files[@]}"; do
     local file_path="${file%.$file_suffix}"
-    echo" file : $file"
-
     local old_file="old_$file_path.xml"
     local object_path=""
 
-    if [[ $file_suffix == "flow-meta.xml" ]]; then
-      source_path="force-app/main/default/flows"
 
-    elif [[ $file_suffix == "flexipage-meta.xml" ]]; then
-      source_path="force-app/main/default/flexipages"
-
-    elif [[ $file_suffix == "object-meta.xml" ]]; then
-      source_path="force-app/main/default/objects"
-      object_path="$(basename "$file" ".$file_suffix" | cut -d'.' -f2)/"
-
-    elif [[ $file_suffix == "field-meta.xml" ]]; then
-      source_path="force-app/main/default/objects"
-      object_path="$(basename "$file" ".$file_suffix" | cut -d'-' -f1)/fields"
-
-    elif [[ $file_suffix == "validationRule-meta.xml" ]]; then
-
-      objectName=$(echo "$file" | awk -F'/' '{print $(NF-2)}')
-      source_path="force-app/main/default/objects/$objectName"
-      echo "ObjectName: $objectName"
-
-    fi
-
-    git show "origin/$target_branch:$source_path/$objectName$file_path.$file_suffix" >"$old_file"
-    local new_file="$source_path/$object_path$file_path.$file_suffix"
+    git show "origin/$target_branch:$modified_files" >"$old_file"
+    local new_file="$modified_files"
     local comparison_output=$(python scripts/flow_comparison_table.py "$old_file" "$new_file" "$file")
     comparison_output="${comparison_output//$'\n'/'%0A'}" # Replace newline characters with %0A
-    local LINK_TO_FILE=$(generate_link "$file" "$file_path" "$file_suffix" "$objectName")
+    local LINK_TO_FILE=$(generate_link "$file" "$file_path" "$file_suffix" "$modified_files")
     local combined_output="${comparison_output} Link to File: $LINK_TO_FILE"
     echo -e "::set-output name=output::$combined_output"
   done
@@ -96,11 +69,22 @@ generate_link() {
   local file=$1
   local file_path=$2
   local file_suffix=$3
-  local objectName=$4
+  local $modified_files=$4
+
+
+
+if [[ $file_suffix == "validationRule-meta.xml" ]]; then
+   IFS="/" read -ra path_components <<< "$modified_files"
+      objectName="${path_components[4]}"
+      echo "$objectName"
   if [[ $file_suffix == "object-meta.xml" ]]; then
-    objectName=$(basename "$file" ".$file_suffix" | cut -d'.' -f2)
+     IFS="/" read -ra path_components <<< "$modified_files"
+      objectName="${path_components[4]}"
+      echo "$objectName"
   elif [[ $file_suffix == "field-meta.xml" ]]; then
-    objectName=$(basename "$(dirname "$(dirname "$file")")")
+     IFS="/" read -ra path_components <<< "$modified_files"
+     objectName="${path_components[4]}"
+     echo "$objectName"
   fi
 
   if [[ $file_suffix == "flow-meta.xml" ]]; then
