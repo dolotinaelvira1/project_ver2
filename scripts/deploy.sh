@@ -116,7 +116,8 @@ generate_link() {
   if [[ $file_suffix == "object-meta.xml" ]]; then
     objectName=$(basename "$file" ".$file_suffix" | cut -d'.' -f2)
   elif [[ $file_suffix == "validationRule-meta.xml" ]]; then
-    objectName=$(basename "$(dirname "$file")")
+        objectPath=$(dirname "$file")
+        objectName=$(basename "$objectPath")
   elif [[ $file_suffix == "field-meta.xml" ]]; then
     objectName=$(basename "$(dirname "$(dirname "$file")")")
   fi
