@@ -46,7 +46,6 @@ process_files() {
   local file_suffix=$3
   local target_branch="master"
 
-
   echo "Processing files with suffix $file_suffix: $files"
   echo "File names: ${names[@]}"
 
@@ -94,14 +93,16 @@ process_files() {
 
     elif [[ $file_suffix == "validationRule-meta.xml" ]]; then
       source_path="force-app/main/default/objects"
-      object_path="$(basename "$file" ".$file_suffix" | cut -d'-' -f1)/validationRules"
+      objectName=$(echo "$file" | awk -F'/' '{print $(NF-2)}')
+      echo "ObjectName: $objectName"
+
     fi
 
-    git show "origin/$target_branch:$source_path/$object_path$file_path.$file_suffix" >"$old_file"
+    git show "origin/$target_branch:$source_path/$objectName$file_path.$file_suffix" >"$old_file"
     local new_file="$source_path/$object_path$file_path.$file_suffix"
     local comparison_output=$(python scripts/flow_comparison_table.py "$old_file" "$new_file" "$file")
     comparison_output="${comparison_output//$'\n'/'%0A'}" # Replace newline characters with %0A
-    local LINK_TO_FILE=$(generate_link "$file" "$file_path" "$file_suffix")
+    local LINK_TO_FILE=$(generate_link "$file" "$file_path" "$file_suffix" "$objectName")
     local combined_output="${comparison_output} Link to File: $LINK_TO_FILE"
     echo -e "::set-output name=output::$combined_output"
   done
@@ -111,13 +112,9 @@ generate_link() {
   local file=$1
   local file_path=$2
   local file_suffix=$3
-
-  local objectName=""
+  local objectName=$4
   if [[ $file_suffix == "object-meta.xml" ]]; then
     objectName=$(basename "$file" ".$file_suffix" | cut -d'.' -f2)
-  elif [[ $file_suffix == "validationRule-meta.xml" ]]; then
-        objectPath=$(dirname "$file")
-        objectName=$(basename "$objectPath")
   elif [[ $file_suffix == "field-meta.xml" ]]; then
     objectName=$(basename "$(dirname "$(dirname "$file")")")
   fi
