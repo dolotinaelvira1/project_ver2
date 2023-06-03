@@ -47,6 +47,29 @@ process_files() {
   local modified_files=$4
   local target_branch="master"
 
+JWT_KEY_FILE=$(mktemp)
+  echo "$JWT_KEY" >"$JWT_KEY_FILE"
+  RANDOM_STRING=$(openssl rand -hex 5)
+  SCRATCH_ORG_DEFINITION="config/project-scratch-def.json"
+  echo "Scratch org alias: $RANDOM_STRING"
+  sfdx force:auth:jwt:grant --clientid "$CLIENT_ID" --jwtkeyfile "$JWT_KEY_FILE" --username "$USERNAME" --setdefaultdevhubusername
+  echo "Access granted"
+  sfdx force:config:set defaultdevhubusername="$USERNAME" --global
+  sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias "$RANDOM_STRING" --durationdays 7 -a "$RANDOM_STRING"
+  echo "org created"
+  SCRATCH_ORG_URL=$(sfdx force:org:open -u $RANDOM_STRING --urlonly)
+  echo "SCRATCH_ORG_URL : $SCRATCH_ORG_URL"
+  INSTANCE_URL=$(sfdx force:org:display -u $RANDOM_STRING --json | jq -r '.result.instanceUrl')
+  echo "INSTANCE_URL : $INSTANCE_URL"
+
+  SID_WITH_PARAM=$(echo $SCRATCH_ORG_URL | awk -F '?' '{print $2}')
+  SID=$(echo $SID_WITH_PARAM | awk -F '=' '{print $2}')
+  echo "SID : $SID"
+
+  sfdx force:source:push -u "$RANDOM_STRING"
+
+  rm "$JWT_KEY_FILE"
+
 
 
   for file in "${files[@]}"; do
