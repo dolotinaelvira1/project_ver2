@@ -45,7 +45,7 @@ process_files() {
   local names=$2
   local file_suffix=$3
   local target_branch="master"
-  local source_path="force-app/main/default"
+
 
   echo "Processing files with suffix $file_suffix: $files"
   echo "File names: ${names[@]}"
