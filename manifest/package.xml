@@ -17,7 +17,6 @@
         <name>ValidationRule</name>
     </types>
     <types>
-        <members>MyFlexiPage</members>
         <name>FlexiPage</name>
     </types>
     <version>57.0</version>
