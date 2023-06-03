@@ -69,18 +69,16 @@ generate_link() {
   local file=$1
   local file_path=$2
   local file_suffix=$3
-  local $modified_files=$4
+  local modified_files=$4
 
-
-
-if [[ $file_suffix == "validationRule-meta.xml" ]]; then
-   IFS="/" read -ra path_components <<< "$modified_files"
-      objectName="${path_components[4]}"
-      echo "$objectName"
   if [[ $file_suffix == "object-meta.xml" ]]; then
      IFS="/" read -ra path_components <<< "$modified_files"
-      objectName="${path_components[4]}"
-      echo "$objectName"
+     objectName="${path_components[4]}"
+     echo "$objectName"
+  elif [[ $file_suffix == "validationRule-meta.xml" ]]; then
+     IFS="/" read -ra path_components <<< "$modified_files"
+     objectName="${path_components[4]}"
+     echo "$objectName"
   elif [[ $file_suffix == "field-meta.xml" ]]; then
      IFS="/" read -ra path_components <<< "$modified_files"
      objectName="${path_components[4]}"
@@ -110,8 +108,8 @@ if [[ $file_suffix == "validationRule-meta.xml" ]]; then
   else
     echo "Неизвестный тип файла: $file_suffix"
   fi
-
 }
+
 
 main() {
   check_and_process_files "field-meta.xml"
