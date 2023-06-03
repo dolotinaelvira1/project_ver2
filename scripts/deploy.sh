@@ -97,15 +97,12 @@ generate_link() {
   if [[ $file_suffix == "object-meta.xml" ]]; then
      IFS="/" read -ra path_components <<< "$modified_files"
      objectName="${path_components[4]}"
-     echo "$objectName"
   elif [[ $file_suffix == "validationRule-meta.xml" ]]; then
      IFS="/" read -ra path_components <<< "$modified_files"
      objectName="${path_components[4]}"
-     echo "$objectName"
   elif [[ $file_suffix == "field-meta.xml" ]]; then
      IFS="/" read -ra path_components <<< "$modified_files"
      objectName="${path_components[4]}"
-     echo "$objectName"
   fi
 
   if [[ $file_suffix == "flow-meta.xml" ]]; then
