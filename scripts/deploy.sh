@@ -50,6 +50,8 @@ JWT_KEY_FILE=$(mktemp)
   sfdx force:config:set defaultdevhubusername="$USERNAME" --global
   sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias "$RANDOM_STRING" --durationdays 7 -a "$RANDOM_STRING"
   echo "org created"
+  SCRATCH_ORG_URL=$(sfdx force:org:open -u $RANDOM_STRING --urlonly)
+  echo "SCRATCH_ORG_URL : $SCRATCH_ORG_URL"
   INSTANCE_URL=$(sfdx force:org:display -u $RANDOM_STRING --json | jq -r '.result.instanceUrl')
   echo "INSTANCE_URL : $INSTANCE_URL"
 
