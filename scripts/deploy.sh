@@ -30,19 +30,12 @@ check_and_process_files() {
     return
   fi
 
-  local names=()
 
-  for filename in "${files[@]}"; do
-    local name=${filename%.$file_suffix}
-    names+=("$name")
-  done
-
-  process_files "$files" "${names[@]}" "$file_suffix" "$modified_files"
+  process_files "$files"  "$file_suffix" "$modified_files"
 }
 
 process_files() {
   local files=$1
-  local names=$2
   local file_suffix=$3
   local modified_files=$4
   local target_branch="master"
@@ -59,6 +52,8 @@ JWT_KEY_FILE=$(mktemp)
   echo "org created"
   SCRATCH_ORG_URL=$(sfdx force:org:open -u $RANDOM_STRING --urlonly)
   echo "SCRATCH_ORG_URL : $SCRATCH_ORG_URL"
+  INFORMACE=$(sfdx force:org:display -u $RANDOM_STRING --json )
+  echo "INFORMACE : $INFORMACE"
   INSTANCE_URL=$(sfdx force:org:display -u $RANDOM_STRING --json | jq -r '.result.instanceUrl')
   echo "INSTANCE_URL : $INSTANCE_URL"
 
@@ -126,7 +121,7 @@ generate_link() {
     local VALIDATION_RULE_ID=$(echo "$VALIDATION_RULE" | jq -r '.result.Id')
     echo "${INSTANCE_URL}/secur/frontdoor.jsp?sid=${SID}&retURL=/lightning/setup/ObjectManager/${objectName}/ValidationRules/${VALIDATION_RULE_ID}/view"
   else
-    echo "Неизвестный тип файла: $file_suffix"
+    echo "Unknown file type: $file_suffix"
   fi
 }
 
