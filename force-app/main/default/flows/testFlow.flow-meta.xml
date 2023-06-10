@@ -25,7 +25,7 @@
     <processType>Flow</processType>
     <screens>
         <name>Testovaci_Flow</name>
-        <label>New screen Label</label>
+        <label>New screen</label>
         <locationX>176</locationX>
         <locationY>158</locationY>
         <allowBack>true</allowBack>
