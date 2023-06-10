@@ -59,6 +59,8 @@ JWT_KEY_FILE=$(mktemp)
   echo "org created"
   SCRATCH_ORG_URL=$(sfdx force:org:open -u $RANDOM_STRING --urlonly)
   echo "SCRATCH_ORG_URL : $SCRATCH_ORG_URL"
+  INFORMACE=$(sfdx force:org:display -u $RANDOM_STRING --json )
+  echo "INFORMACE : $INFORMACE"
   INSTANCE_URL=$(sfdx force:org:display -u $RANDOM_STRING --json | jq -r '.result.instanceUrl')
   echo "INSTANCE_URL : $INSTANCE_URL"
 
