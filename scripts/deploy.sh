@@ -1,15 +1,6 @@
 #!/bin/bash
 
-# Check for required utilities
-check_required_utilities() {
-  local required_utilities=("git", "grep", "xargs", "basename")
-  for utility in "${required_utilities[@]}"; do
-    if ! command -v "$utility" >/dev/null 2>&1; then
-      echo "Required utility $utility not found. Please install it and try again."
-      exit 1
-    fi
-  done
-}
+
 
 # Check for modified files and process them
 check_and_process_modified_files() {
@@ -117,7 +108,6 @@ generate_link_to_file() {
 
 
 main() {
-  check_required_utilities
   check_and_process_modified_files "field-meta.xml"
   check_and_process_modified_files "flow-meta.xml"
   check_and_process_modified_files "flexipage-meta.xml"
