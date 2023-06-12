@@ -1,108 +1,93 @@
 #!/bin/bash
 
-# Проверка наличия необходимых утилит
-check_dependencies() {
-  local dependencies=("git" "grep" "xargs" "basename")
-  for dep in "${dependencies[@]}"; do
-    if ! command -v "$dep" >/dev/null 2>&1; then
-      echo "Požadovaný nástroj $dep nebyl nalezen. Nainstalujte ho a zkuste to znovu."
+# Check for required utilities
+check_required_utilities() {
+  local required_utilities=("git", "grep", "xargs", "basename")
+  for utility in "${required_utilities[@]}"; do
+    if ! command -v "$utility" >/dev/null 2>&1; then
+      echo "Required utility $utility not found. Please install it and try again."
       exit 1
     fi
   done
 }
 
-# Проверка наличия измененных файлов Flow
-check_and_process_files() {
-  local file_suffix=$1
-  local modified_files
-  modified_files=$(git diff origin/master...origin/"$BRANCH_NAME" --name-only | grep -i "$file_suffix")
+# Check for modified files and process them
+check_and_process_modified_files() {
+  local file_extension=$1
+  local detected_modified_files
+  detected_modified_files=$(git diff origin/master...origin/"$BRANCH_NAME" --name-only | grep -i "$file_extension")
 
-  if [[ -z "$modified_files" ]]; then
-    echo "no changes  found with suffix $file_suffix."
+  if [[ -z "$detected_modified_files" ]]; then
+    echo "No changes found with suffix $file_extension."
     return
   fi
 
-  local files
-  files=($(echo "$modified_files" | grep -E '^[^.]+\.'"$file_suffix" | xargs -r basename))
+  local filenames
+  filenames=($(echo "$detected_modified_files" | grep -E '^[^.]+\.'"$file_extension" | xargs -r basename))
 
-  if [[ -z "$files" ]]; then
-    echo "no changes found with suffix $file_suffix."
+  if [[ -z "$filenames" ]]; then
+    echo "No changes found with suffix $file_extension."
     return
   fi
 
-  local names=()
-
-  for filename in "${files[@]}"; do
-    local name=${filename%.$file_suffix}
-    names+=("$name")
-  done
-
-  process_files "$files" "${names[@]}" "$file_suffix" "$modified_files"
+  process_modified_files "$filenames" "$file_extension" "$detected_modified_files"
 }
 
-process_files() {
-  local files=$1
-  local names=$2
-  local file_suffix=$3
-  local modified_files=$4
-  local target_branch="master"
+process_modified_files() {
+  local filenames=$1
+  local file_extension=$2
+  local detected_modified_files=$3
+  local master_branch="master"
 
-JWT_KEY_FILE=$(mktemp)
-  echo "$JWT_KEY" >"$JWT_KEY_FILE"
-  RANDOM_STRING=$(openssl rand -hex 5)
-  SCRATCH_ORG_DEFINITION="config/project-scratch-def.json"
-  echo "Scratch org alias: $RANDOM_STRING"
-  sfdx force:auth:jwt:grant --clientid "$CLIENT_ID" --jwtkeyfile "$JWT_KEY_FILE" --username "$USERNAME" --setdefaultdevhubusername
+  local jwt_key_temp_file=$(mktemp)
+  echo "$JWT_KEY" >"$jwt_key_temp_file"
+  local random_string=$(openssl rand -hex 5)
+  local scratch_org_definition="config/project-scratch-def.json"
+  echo "Scratch org alias: $random_string"
+  sfdx force:auth:jwt:grant --clientid "$CLIENT_ID" --jwtkeyfile "$jwt_key_temp_file" --username "$USERNAME" --setdefaultdevhubusername
   echo "Access granted"
   sfdx force:config:set defaultdevhubusername="$USERNAME" --global
-  sfdx force:org:create -f "$SCRATCH_ORG_DEFINITION" --setalias "$RANDOM_STRING" --durationdays 7 -a "$RANDOM_STRING"
+  sfdx force:org:create -f "$scratch_org_definition" --setalias "$random_string" --durationdays 7 -a "$random_string"
   echo "org created"
-  SCRATCH_ORG_URL=$(sfdx force:org:open -u $RANDOM_STRING --urlonly)
-  echo "SCRATCH_ORG_URL : $SCRATCH_ORG_URL"
-  INSTANCE_URL=$(sfdx force:org:display -u $RANDOM_STRING --json | jq -r '.result.instanceUrl')
-  echo "INSTANCE_URL : $INSTANCE_URL"
 
-  SID_WITH_PARAM=$(echo $SCRATCH_ORG_URL | awk -F '?' '{print $2}')
-  SID=$(echo $SID_WITH_PARAM | awk -F '=' '{print $2}')
-  echo "SID : $SID"
+  local instance_url=$(sfdx force:org:display -u $random_string --json | jq -r '.result.instanceUrl')
+  echo "INSTANCE_URL : $instance_url"
 
-  sfdx force:source:push -u "$RANDOM_STRING"
+  SID=$(sfdx force:org:display -u $RANDOM_STRING --json | jq -r '.result.accessToken' )
+    echo "SID : $SID"
 
-  rm "$JWT_KEY_FILE"
+  sfdx force:source:push -u "$random_string"
 
+  rm "$jwt_key_temp_file"
 
+  for file in "${filenames[@]}"; do
+    local file_path_without_extension="${file%.$file_extension}"
+    local old_version_file="old_$file_path_without_extension.xml"
 
-  for file in "${files[@]}"; do
-    local file_path="${file%.$file_suffix}"
-    local old_file="old_$file_path.xml"
-    local object_path=""
-
-
-    git show "origin/$target_branch:$modified_files" >"$old_file"
-    local new_file="$modified_files"
-    local comparison_output=$(python scripts/flow_comparison_table.py "$old_file" "$new_file" "$file")
+    git show "origin/$master_branch:$detected_modified_files" >"$old_version_file"
+    local new_version_file="$detected_modified_files"
+    local comparison_output=$(python scripts/flow_comparison_table.py "$old_version_file" "$new_version_file" "$file")
     comparison_output="${comparison_output//$'\n'/'%0A'}" # Replace newline characters with %0A
-    local LINK_TO_FILE=$(generate_link "$file" "$file_path" "$file_suffix" "$modified_files")
-    local combined_output="${comparison_output} Link to File: $LINK_TO_FILE"
+    local file_link=$(generate_link_to_file "$file_path_without_extension" "$file_extension" "$detected_modified_files")
+    local combined_output="${comparison_output} Link to File: $file_link"
     echo -e "::set-output name=output::$combined_output"
   done
 }
 
-generate_link() {
-  local file=$1
-  local file_path=$2
-  local file_suffix=$3
-  local modified_files=$4
+generate_link_to_file() {
+  local file_path_without_extension=$1
+  local file_extension=$2
+  local detected_modified_files=$3
 
-  if [[ $file_suffix == "object-meta.xml" ]]; then
-     IFS="/" read -ra path_components <<< "$modified_files"
-     objectName="${path_components[4]}"
-  elif [[ $file_suffix == "validationRule-meta.xml" ]]; then
-     IFS="/" read -ra path_components <<< "$modified_files"
-     objectName="${path_components[4]}"
-  elif [[ $file_suffix == "field-meta.xml" ]]; then
-     IFS="/" read -ra path_components <<< "$modified_files"
-     objectName="${path_components[4]}"
+  if [[ $file_extension == "object-meta.xml" ]]; then
+    IFS="/" read -ra path_components <<< "$detected_modified_files"
+    local object_name="${path_components[4]}"
+  elif [[ $file_extension == "validationRule-meta.xml" ]]; then
+    IFS="/" read -ra path_components <<< "$detected_modified_files"
+    local object_name="${path_components[4]}"
+  elif [[ $file_extension == "field-meta.xml" ]]; then
+    IFS="/" read -ra path_components <<< "$detected_modified_files"
+    local object_name="${path_components[4]}"
   fi
 
   if [[ $file_suffix == "flow-meta.xml" ]]; then
@@ -126,17 +111,18 @@ generate_link() {
     local VALIDATION_RULE_ID=$(echo "$VALIDATION_RULE" | jq -r '.result.Id')
     echo "${INSTANCE_URL}/secur/frontdoor.jsp?sid=${SID}&retURL=/lightning/setup/ObjectManager/${objectName}/ValidationRules/${VALIDATION_RULE_ID}/view"
   else
-    echo "Неизвестный тип файла: $file_suffix"
+    echo "Unknown file type : $file_suffix"
   fi
 }
 
 
 main() {
-  check_and_process_files "field-meta.xml"
-  check_and_process_files "flow-meta.xml"
-  check_and_process_files "flexipage-meta.xml"
-  check_and_process_files "object-meta.xml"
-  check_and_process_files "validationRule-meta.xml"
+  check_required_utilities
+  check_and_process_modified_files "field-meta.xml"
+  check_and_process_modified_files "flow-meta.xml"
+  check_and_process_modified_files "flexipage-meta.xml"
+  check_and_process_modified_files "object-meta.xml"
+  check_and_process_modified_files "validationRule-meta.xml"
 }
 
 main
