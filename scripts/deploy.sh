@@ -41,8 +41,8 @@ process_modified_files() {
   sfdx force:org:create -f "$scratch_org_definition" --setalias "$random_string" --durationdays 7 -a "$random_string"
   echo "org created"
 
-  local instance_url=$(sfdx force:org:display -u $random_string --json | jq -r '.result.instanceUrl')
-  echo "INSTANCE_URL : $instance_url"
+  local INSTANCE_URL=$(sfdx force:org:display -u $random_string --json | jq -r '.result.instanceUrl')
+  echo "INSTANCE_URL : $INSTANCE_URL"
 
   SID=$(sfdx force:org:display -u $random_string --json | jq -r '.result.accessToken' )
     echo "SID : $SID"
@@ -83,12 +83,12 @@ generate_link_to_file() {
   fi
 
   if [[ $file_extension == "flow-meta.xml" ]]; then
-    local flow=$(sfdx force:data:record:get -s FlowDefinition -w "DeveloperName=$file_name" -t -u $RANDOM_STRING --json)
+    local flow=$(sfdx force:data:record:get -s FlowDefinition -w "DeveloperName=$file_name" -t -u $random_string --json)
     local flow_id=$(echo "$flow" | jq -r '.result.ActiveVersionId')
     echo "${INSTANCE_URL}secur/frontdoor.jsp?sid=${SID}&retURL=/builder_platform_interaction/flowBuilder.app?flowId=${flow_id}"
 
   elif [[ $file_extension == "flexipage-meta.xml" ]]; then
-    local app_builder=$(sfdx force:data:record:get -s FlexiPage -w "DeveloperName=$file_name" -t -u $RANDOM_STRING --json)
+    local app_builder=$(sfdx force:data:record:get -s FlexiPage -w "DeveloperName=$file_name" -t -u $random_string --json)
     local app_builder_id=$(echo "$app_builder" | jq -r '.result.ActiveVersionId')
     echo "${INSTANCE_URL}secur/frontdoor.jsp?sid=${SID}&retURL=/visualEditor/appBuilder.app?id=${app_builder_id}"
 
@@ -99,7 +99,7 @@ generate_link_to_file() {
     echo "${INSTANCE_URL}secur/frontdoor.jsp?sid=${SID}&retURL=/lightning/setup/ObjectManager/${object_name}/FieldsAndRelationships/${file_name}/view"
 
   elif [[ $file_extension == "validationRule-meta.xml" ]]; then
-    local validation_rule=$(sfdx force:data:record:get -s ValidationRule -w "ValidationName=$file_name" -t -u $RANDOM_STRING --json)
+    local validation_rule=$(sfdx force:data:record:get -s ValidationRule -w "ValidationName=$file_name" -t -u $random_string --json)
     local validation_rule_id=$(echo "$validation_rule" | jq -r '.result.Id')
     echo "${INSTANCE_URL}/secur/frontdoor.jsp?sid=${SID}&retURL=/lightning/setup/ObjectManager/${object_name}/ValidationRules/${validation_rule_id}/view"
 
