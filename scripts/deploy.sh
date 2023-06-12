@@ -52,59 +52,62 @@ process_modified_files() {
   rm "$jwt_key_temp_file"
 
   for file in "${filenames[@]}"; do
-    local file_path_without_extension="${file%.$file_extension}"
-    local old_version_file="old_$file_path_without_extension.xml"
+    local file_name="${file%.$file_extension}"
+    local old_version_file="old_$file_name.xml"
 
     git show "origin/$master_branch:$detected_modified_files" >"$old_version_file"
     local new_version_file="$detected_modified_files"
     local comparison_output=$(python scripts/flow_comparison_table.py "$old_version_file" "$new_version_file" "$file")
     comparison_output="${comparison_output//$'\n'/'%0A'}" # Replace newline characters with %0A
-    local file_link=$(generate_link_to_file "$file_path_without_extension" "$file_extension" "$detected_modified_files")
+    local file_link=$(generate_link_to_file "$file_name" "$file_extension" "$detected_modified_files")
     local combined_output="${comparison_output} Link to File: $file_link"
     echo -e "::set-output name=output::$combined_output"
   done
 }
 
 generate_link_to_file() {
-  local file_path_without_extension=$1
+  local file_name=$1
   local file_extension=$2
   local detected_modified_files=$3
+  local object_name=""
 
   if [[ $file_extension == "object-meta.xml" ]]; then
     IFS="/" read -ra path_components <<< "$detected_modified_files"
-    local object_name="${path_components[4]}"
+    object_name="${path_components[4]}"
   elif [[ $file_extension == "validationRule-meta.xml" ]]; then
     IFS="/" read -ra path_components <<< "$detected_modified_files"
-    local object_name="${path_components[4]}"
+    object_name="${path_components[4]}"
   elif [[ $file_extension == "field-meta.xml" ]]; then
     IFS="/" read -ra path_components <<< "$detected_modified_files"
-    local object_name="${path_components[4]}"
+    object_name="${path_components[4]}"
   fi
 
-  if [[ $file_suffix == "flow-meta.xml" ]]; then
-    local FLOW=$(sfdx force:data:record:get -s FlowDefinition -w "DeveloperName=$file_path" -t -u $RANDOM_STRING --json)
-    local FLOW_ID=$(echo "$FLOW" | jq -r '.result.ActiveVersionId')
-    echo "${INSTANCE_URL}secur/frontdoor.jsp?sid=${SID}&retURL=/builder_platform_interaction/flowBuilder.app?flowId=${FLOW_ID}"
+  if [[ $file_extension == "flow-meta.xml" ]]; then
+    local flow=$(sfdx force:data:record:get -s FlowDefinition -w "DeveloperName=$file_name" -t -u $RANDOM_STRING --json)
+    local flow_id=$(echo "$flow" | jq -r '.result.ActiveVersionId')
+    echo "${INSTANCE_URL}secur/frontdoor.jsp?sid=${SID}&retURL=/builder_platform_interaction/flowBuilder.app?flowId=${flow_id}"
 
-  elif [[ $file_suffix == "flexipage-meta.xml" ]]; then
-    local appBuilder=$(sfdx force:data:record:get -s FlexiPage -w "DeveloperName=$file_path" -t -u $RANDOM_STRING --json)
-    local appBuilder_ID=$(echo "$appBuilder" | jq -r '.result.ActiveVersionId')
-    echo "${INSTANCE_URL}secur/frontdoor.jsp?sid=${SID}&retURL=/visualEditor/appBuilder.app?id=${appBuilder_ID}"
+  elif [[ $file_extension == "flexipage-meta.xml" ]]; then
+    local app_builder=$(sfdx force:data:record:get -s FlexiPage -w "DeveloperName=$file_name" -t -u $RANDOM_STRING --json)
+    local app_builder_id=$(echo "$app_builder" | jq -r '.result.ActiveVersionId')
+    echo "${INSTANCE_URL}secur/frontdoor.jsp?sid=${SID}&retURL=/visualEditor/appBuilder.app?id=${app_builder_id}"
 
-  elif [[ $file_suffix == "object-meta.xml" ]]; then
-    echo "${INSTANCE_URL}secur/frontdoor.jsp?sid=${SID}&retURL=/lightning/setup/ObjectManager/${objectName}/Details/view"
+  elif [[ $file_extension == "object-meta.xml" ]]; then
+    echo "${INSTANCE_URL}secur/frontdoor.jsp?sid=${SID}&retURL=/lightning/setup/ObjectManager/${object_name}/Details/view"
 
-  elif [[ $file_suffix == "field-meta.xml" ]]; then
-    echo "${INSTANCE_URL}secur/frontdoor.jsp?sid=${SID}&retURL=/lightning/setup/ObjectManager/${objectName}/FieldsAndRelationships/${file_path}/view"
+  elif [[ $file_extension == "field-meta.xml" ]]; then
+    echo "${INSTANCE_URL}secur/frontdoor.jsp?sid=${SID}&retURL=/lightning/setup/ObjectManager/${object_name}/FieldsAndRelationships/${file_name}/view"
 
-  elif [[ $file_suffix == "validationRule-meta.xml" ]]; then
-    local VALIDATION_RULE=$(sfdx force:data:record:get -s ValidationRule -w "ValidationName=$file_path" -t -u $RANDOM_STRING --json)
-    local VALIDATION_RULE_ID=$(echo "$VALIDATION_RULE" | jq -r '.result.Id')
-    echo "${INSTANCE_URL}/secur/frontdoor.jsp?sid=${SID}&retURL=/lightning/setup/ObjectManager/${objectName}/ValidationRules/${VALIDATION_RULE_ID}/view"
+  elif [[ $file_extension == "validationRule-meta.xml" ]]; then
+    local validation_rule=$(sfdx force:data:record:get -s ValidationRule -w "ValidationName=$file_name" -t -u $RANDOM_STRING --json)
+    local validation_rule_id=$(echo "$validation_rule" | jq -r '.result.Id')
+    echo "${INSTANCE_URL}/secur/frontdoor.jsp?sid=${SID}&retURL=/lightning/setup/ObjectManager/${object_name}/ValidationRules/${validation_rule_id}/view"
+
   else
-    echo "Unknown file type : $file_suffix"
+    echo "Unknown file type: $file_extension"
   fi
 }
+
 
 
 main() {
