@@ -53,7 +53,7 @@ process_modified_files() {
   local instance_url=$(sfdx force:org:display -u $random_string --json | jq -r '.result.instanceUrl')
   echo "INSTANCE_URL : $instance_url"
 
-  SID=$(sfdx force:org:display -u $RANDOM_STRING --json | jq -r '.result.accessToken' )
+  SID=$(sfdx force:org:display -u $random_string --json | jq -r '.result.accessToken' )
     echo "SID : $SID"
 
   sfdx force:source:push -u "$random_string"
